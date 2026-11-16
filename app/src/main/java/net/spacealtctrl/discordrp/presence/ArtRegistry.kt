@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.DisplayMetrics
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.settings.Stash
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -34,7 +33,6 @@ class ArtRegistry @Inject constructor(
     private val coverLookup: CoverLookup,
     private val deezerCovers: DeezerCovers,
     private val stash: Stash,
-    private val log: AppLog,
 ) {
     private val unavailableAt = ConcurrentHashMap<String, Long>()
     private val unavailableStreak = ConcurrentHashMap<String, Int>()

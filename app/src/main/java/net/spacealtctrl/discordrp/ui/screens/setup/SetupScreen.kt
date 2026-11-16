@@ -48,19 +48,12 @@ fun SetupScreen(
     val context = LocalContext.current
     val stash = remember { Stash.of(context) }
     val signedIn = stash.signedIn
-
-    val batteryFreedom = remember(context) {
+    val ready = signedIn && notificationAccess.value
 
     val batteryFreedom = remember(context) {
         context.getSystemService(PowerManager::class.java)
             ?.isIgnoringBatteryOptimizations(context.packageName) == true
     }
-    val permissionAsk = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { canPostNotifications = it },
-    )
-
-    val ready = signedIn && notificationAccess.value
 
     val unlockPulse = remember { Animatable(1f) }
     var wasReady by remember { mutableStateOf(ready) }
