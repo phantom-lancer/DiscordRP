@@ -97,7 +97,19 @@ class GatewayEngine(
             log.warn(TAG, "Session never came up; presence update dropped")
             return
         }
-        transmit(Op.PRESENCE, GatewayCodec.encode(update))
+        if (!transmit(Op.PRESENCE, GatewayCodec.encode(update))) {
+            log.warn(TAG, "Presence send failed; reconnecting the gateway")
+            val open = socket
+            if (open == null) {
+                redial()
+            } else {
+                try {
+                    open.close(CloseReason(APP_CLOSE_CODE, "presence send failed"))
+                } catch (_: Exception) {
+                    // The receive loop will finish and the redial loop will recover the session.
+                }
+            }
+        }
     }
 
     override fun shutdown() {
@@ -246,15 +258,6 @@ class GatewayEngine(
                 _linked.value = true
                 log.info(TAG, "Session resumed")
             }
-            "MESSAGE_CREATE" -> {
-                val message = GatewayCodec.read<ChatMessage>(frame) ?: return
-                if (message.sender?.id == null || message.sentBy(selfId)) return
-                _events.tryEmit(GatewayEvent.MessageArrived(message))
-            }
-            "MESSAGE_ACK" -> {
-                val channelId = GatewayCodec.read<ReadReceipt>(frame)?.channelId ?: return
-                _events.tryEmit(GatewayEvent.ChannelSeen(channelId))
-            }
         }
     }
 
@@ -292,15 +295,22 @@ class GatewayEngine(
         transmit(Op.HEARTBEAT, GatewayCodec.sequenceValue(seq))
     }
 
-    private suspend fun transmit(op: Int, data: kotlinx.serialization.json.JsonElement) {
-        val open = socket ?: return
-        if (!open.isActive) return
-        try {
+    private suspend fun transmit(op: Int, data: kotlinx.serialization.json.JsonElement): Boolean {
+        val open = socket ?: return false
+        if (!open.isActive) return false
+        return try {
             open.send(Frame.Text(GatewayCodec.outbound(op, data)))
+            true
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            log.error(TAG, "Send failed for op=$op: ${e::class.java.simpleName}")
+            log.error(TAG, "Send failed for op=$op: " + e.javaClass.simpleName)
+            try {
+                open.close(CloseReason(APP_CLOSE_CODE, "gateway send failed"))
+            } catch (_: Exception) {
+                // The redial loop owns socket recovery.
+            }
+            false
         }
     }
 

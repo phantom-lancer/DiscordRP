@@ -46,8 +46,8 @@ class PresenceEchoTest {
     }
 
     @Test
-    fun `a seek past the tolerance is not an echo`() {
-        assertFalse(PresenceEcho.isEcho(update(start = 1_000_000L), update(start = 1_090_000L)))
+    fun `a short seek is not swallowed as timestamp jitter`() {
+        assertFalse(PresenceEcho.isEcho(update(start = 1_000_000L), update(start = 1_001_000L)))
     }
 
     @Test

@@ -33,7 +33,6 @@ import net.spacealtctrl.discordrp.ui.screens.cover.AddAlbumScreen
 import net.spacealtctrl.discordrp.ui.screens.cover.AddCoverScreen
 import kotlin.math.sign
 import net.spacealtctrl.discordrp.settings.Stash
-import net.spacealtctrl.discordrp.ui.screens.alerts.AlertsScreen
 import net.spacealtctrl.discordrp.ui.screens.home.HomeScreen
 import net.spacealtctrl.discordrp.ui.screens.login.LoginScreen
 import net.spacealtctrl.discordrp.ui.screens.presence.PresenceScreen
@@ -172,9 +171,6 @@ fun AppNavHost(notificationAccess: State<Boolean>) {
                 }
                 composable(Dock.PRESENCE.route) {
                     PresenceScreen()
-                }
-                composable(Dock.ALERTS.route) {
-                    AlertsScreen()
                 }
                 composable(Dock.YOU.route) {
                     YouScreen(

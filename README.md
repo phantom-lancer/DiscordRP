@@ -17,23 +17,22 @@
 
 DiscordRP is built for de-Googled Android in mind: GrapheneOS, CalyxOS, LineageOS and /e/OS.
 
-DiscordRP keeps its own connection to Discord, so your messages arrive and the music you
-play shows on your profile.
+DiscordRP keeps its own connection to Discord and shares the music you play on your profile.
+It does not create message notifications.
 
 ## Features
 
-- [x] DMs and mentions as notifications, with reply and mark as read from the shade
-- [x] Music rich presence from any player, with album art from MusicBrainz
-- [x] Choose what notifies you: everything, mentions and DMs, or DMs only
-- [x] Set your status and mobile badge from your phone
-- [x] Starts on boot and stays connected
+- [x] Music rich presence from supported Android media sessions
+- [x] Album art from the player's own media metadata, MusicBrainz, or optional Deezer backup
+- [x] Set your Discord status and mobile badge from your phone
+- [x] Fast play, pause, stop, and seek updates
+- [x] Starts on boot and reconnects automatically
 
 ## Screenshots
 
 <div align="center">
   <img src="docs/screens/home.png" width="30%" alt="Home: connection state and now playing">
   <img src="docs/screens/presence.png" width="30%" alt="Presence: status and card contents">
-  <img src="docs/screens/alerts.png" width="30%" alt="Alerts: notification scope and filters">
 </div>
 
 ## Download
@@ -47,20 +46,20 @@ or Play Services required.
 ## Setup
 
 1. Install and open the app
-2. Grant notification access and allow notifications
+2. Grant notification access so DiscordRP can read active media sessions
 3. Sign in with Discord
 4. Turn the connection on
 
-Enable **Unrestricted battery** during setup. Aggressive battery management is the usual
-reason messages stop arriving while the screen is off.
+Enable **Unrestricted battery** during setup. Aggressive battery management can suspend the connection while the screen is off.
 
 ## Privacy
 
 No analytics, no crash reporting, and no server in the middle. The app talks to Discord,
-MusicBrainz, and the Cover Art Archive directly. Your login stays on the device and is
+MusicBrainz, the Cover Art Archive, and (when enabled) Deezer directly. Your login stays on the device and is
 removed by signing out.
 
-Album art comes from MusicBrainz and the Cover Art Archive. In the Presence tab, under
+Album art is taken from the player's HTTPS media metadata first. Yandex Music image-size placeholders
+are normalized automatically. MusicBrainz and the Cover Art Archive are used as fallbacks. In the Presence tab, under
 **Album covers**, you can pick **MusicBrainz (+ Deezer backup)**. The app then asks Deezer
 directly, and only when MusicBrainz has no cover.
 

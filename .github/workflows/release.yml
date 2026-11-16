@@ -19,42 +19,55 @@ permissions:
   contents: write
 
 jobs:
+  signing-check:
+    name: Check Android signing configuration
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - name: Check signing secrets
+        id: check
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          if [[ -n "$KEYSTORE_BASE64" && -n "$KEYSTORE_PASSWORD" && -n "$KEY_ALIAS" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "Release signing is configured."
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "Release skipped: configure KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD in repository Actions secrets."
+          fi
+
   release:
-    name: Build signed APK
+    name: Build and publish signed APK
+    needs: signing-check
+    if: needs.signing-check.outputs.configured == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Check release credentials
-        env:
-          REPO_SYNC_PAT: ${{ secrets.REPO_SYNC_PAT }}
-        run: |
-          : "${REPO_SYNC_PAT:?REPO_SYNC_PAT secret is not set; it is needed to push the version bump past the branch ruleset}"
-
       - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ secrets.REPO_SYNC_PAT }}
+          token: ${{ github.token }}
 
       - name: Resolve version
         id: version
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           FORCE_RELEASE: ${{ inputs.force_release }}
         run: |
           set -euo pipefail
           CATALOG=gradle/libs.versions.toml
           released() { gh release view "v$1" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; }
-
           VERSION=$(sed -n 's/^app-version-name = "\(.*\)"/\1/p' "$CATALOG")
           case "$VERSION" in
             [0-9]*.[0-9]*.[0-9]*) ;;
-            *) echo "app-version-name in ${CATALOG} is not major.minor.patch: '${VERSION}'"; exit 1 ;;
+            *) echo "Invalid app version: '${VERSION}'"; exit 1 ;;
           esac
           IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
-
-          if [ "${FORCE_RELEASE:-}" = "true" ]; then
-            echo "Forcing re-release of v${VERSION}"
-          else
+          if [ "${FORCE_RELEASE:-}" != "true" ]; then
             FOUND=false
             for _ in $(seq 1 200); do
               if released "$VERSION"; then
@@ -65,19 +78,13 @@ jobs:
                 break
               fi
             done
-            if [ "$FOUND" != "true" ]; then
-              echo "No free patch version found above ${MAJOR}.${MINOR}.${PATCH}"
-              exit 1
-            fi
+            [ "$FOUND" = "true" ] || { echo "No free version found"; exit 1; }
           fi
-
           VERSION_CODE=$((MAJOR * 1000000 + MINOR * 1000 + PATCH))
           sed -i -E "s/^app-version-name = \".*\"/app-version-name = \"${VERSION}\"/" "$CATALOG"
           sed -i -E "s/^app-version-code = \".*\"/app-version-code = \"${VERSION_CODE}\"/" "$CATALOG"
-
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "version_code=${VERSION_CODE}" >> "$GITHUB_OUTPUT"
-          echo "Releasing v${VERSION} (versionCode ${VERSION_CODE})"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v6
@@ -91,14 +98,12 @@ jobs:
       - name: Restore keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          : "${KEYSTORE_BASE64:?KEYSTORE_BASE64 secret is not set}"
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+        run: echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
 
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
-      - name: Assemble release
+      - name: Assemble signed release
         env:
           KEYSTORE_FILE: ${{ runner.temp }}/release.jks
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -106,25 +111,18 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
-      - name: Verify the APK is signed
+      - name: Verify APK signature
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/app-release.apk
 
-      - name: Name the artifact
+      - name: Name artifact
         id: name
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           cp app/build/outputs/apk/release/app-release.apk "DiscordRP-${VERSION}.apk"
           echo "apk=DiscordRP-${VERSION}.apk" >> "$GITHUB_OUTPUT"
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: discordrp-release
-          path: ${{ steps.name.outputs.apk }}
-          if-no-files-found: error
 
       - name: Commit version bump
         id: commit
@@ -136,34 +134,26 @@ jobs:
           CATALOG=gradle/libs.versions.toml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          apply_bump() {
-            sed -i -E "s/^app-version-name = \".*\"/app-version-name = \"${VERSION}\"/" "$CATALOG"
-            sed -i -E "s/^app-version-code = \".*\"/app-version-code = \"${VERSION_CODE}\"/" "$CATALOG"
-          }
-
           for attempt in 1 2 3 4 5; do
-            if git diff --quiet "$CATALOG"; then
+            git add "$CATALOG"
+            if git diff --cached --quiet; then
               echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-
-            git add "$CATALOG"
             git commit -m "chore: release v${VERSION} [skip ci]"
             if git push origin HEAD:main; then
               echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-
-            echo "push rejected (attempt ${attempt}); re-applying the bump on top of latest main"
             git fetch origin main
             git reset --hard origin/main
-            apply_bump
+            sed -i -E "s/^app-version-name = \".*\"/app-version-name = \"${VERSION}\"/" "$CATALOG"
+            sed -i -E "s/^app-version-code = \".*\"/app-version-code = \"${VERSION_CODE}\"/" "$CATALOG"
           done
-          echo "Failed to push after retries"
+          echo "Could not push version bump"
           exit 1
 
-      - name: Publish release
+      - name: Publish GitHub release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}

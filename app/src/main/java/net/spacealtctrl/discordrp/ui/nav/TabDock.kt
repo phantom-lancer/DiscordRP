@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,7 +39,6 @@ import net.spacealtctrl.discordrp.ui.theme.Pace
 
 enum class Dock(val route: String, val icon: ImageVector, val labelRes: Int) {
     HOME("home", Icons.Rounded.Home, R.string.tab_home),
-    ALERTS("alerts", Icons.Rounded.Notifications, R.string.tab_alerts),
     PRESENCE("presence", Icons.Rounded.MusicNote, R.string.tab_presence),
     YOU("you", Icons.Rounded.Person, R.string.tab_you),
 }

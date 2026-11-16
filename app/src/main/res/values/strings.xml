@@ -15,9 +15,9 @@
     <string name="home_autostart_blurb">Reconnect when the phone restarts.</string>
     <string name="home_power_header">Battery</string>
     <string name="power_always_on">Always connected</string>
-    <string name="power_always_on_blurb">Instant messages day or night. Keeps the processor awake.</string>
+    <string name="power_always_on_blurb">Keeps music presence updated quickly. Keeps the processor awake.</string>
     <string name="power_balanced">Balanced</string>
-    <string name="power_balanced_blurb">Lets the phone sleep. Messages may wait until you wake it.</string>
+    <string name="power_balanced_blurb">Lets the phone sleep. Presence may reconnect after you wake it.</string>
     <string name="power_saver">Battery saver</string>
     <string name="power_saver_blurb">As Balanced, and skips album art lookups. Cached art still shows.</string>
     <string name="access_banner_title">Notification access needed</string>
@@ -25,16 +25,16 @@
     <string name="access_banner_action">Grant access</string>
     <string name="bridge_card_on_title">Connected</string>
     <string name="bridge_card_off_title">Not connected</string>
-    <string name="bridge_card_on_body">You are online. Messages and presence are working.</string>
+    <string name="bridge_card_on_body">Your connection and music presence are working.</string>
     <string name="bridge_card_linking_body">Connecting…</string>
-    <string name="bridge_card_off_body">Turn on to get messages and share your music.</string>
+    <string name="bridge_card_off_body">Turn on to share your music on Discord.</string>
     <string name="hero_listening_on">LISTENING ON %1$s</string>
     <string name="hero_idle_title">Nothing playing</string>
     <string name="hero_idle_body">Start some music and it shows up here.</string>
     <string name="hero_idle_off_title">Not connected</string>
     <string name="hero_idle_off_body">Turn on the switch above.</string>
     <string name="hero_idle_private_title">Sharing is off</string>
-    <string name="hero_idle_private_body">You still get messages.</string>
+    <string name="hero_idle_private_body">Music sharing is off.</string>
 
     <string name="mood_sheet_title">Set your status</string>
     <string name="mood_online">Online</string>
@@ -115,11 +115,11 @@
     <string name="profile_listening_heading">Listening to %1$s</string>
 
     <string name="setup_title">Setup</string>
-    <string name="setup_subtitle">Three steps and you are done.</string>
+    <string name="setup_subtitle">Two steps and you are done.</string>
     <string name="setup_required_header">Required</string>
     <string name="setup_optional_header">Optional</string>
-    <string name="setup_media_access_title">Notification access</string>
-    <string name="setup_media_access_blurb">Lets the app see what your music apps are playing.</string>
+    <string name="setup_media_access_title">Media session access</string>
+    <string name="setup_media_access_blurb">Lets DiscordRP read playback details and album art from your music apps.</string>
     <string name="setup_post_notifications_title">Show notifications</string>
     <string name="setup_post_notifications_blurb">So messages can reach you.</string>
     <string name="setup_sign_in_title">Sign in with Discord</string>
@@ -130,7 +130,7 @@
     <string name="setup_finish_cta">Done</string>
 
     <string name="login_cta">Sign in with Discord</string>
-    <string name="login_tagline">Push notifications and rich presence, without Google.</string>
+    <string name="login_tagline">Music rich presence, without Google.</string>
     <string name="login_token_note">You sign in on Discord\'s own page. Your login is stored only on this device.</string>
     <string name="login_failed_title">Sign in failed</string>
     <string name="login_failed_body">Discord did not accept the login. Try again.</string>
@@ -146,7 +146,7 @@
     <string name="common_ok">OK</string>
 
     <string name="bridge_channel_name">Connection</string>
-    <string name="bridge_channel_desc">Keeps the Discord connection alive in the background</string>
+    <string name="bridge_channel_desc">Keeps the Discord music-presence connection alive in the background</string>
     <string name="inbox_reply">Reply</string>
     <string name="inbox_reply_to">Reply to %1$s</string>
     <string name="inbox_mark_read">Mark as read</string>

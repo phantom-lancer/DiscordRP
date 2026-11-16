@@ -1,13 +1,8 @@
 package net.spacealtctrl.discordrp.ui.screens.setup
 
-import android.Manifest.permission.POST_NOTIFICATIONS
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -32,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.ContextCompat
 import net.spacealtctrl.discordrp.R
 import net.spacealtctrl.discordrp.settings.Stash
 import net.spacealtctrl.discordrp.ui.kit.AccentButton
@@ -55,13 +49,8 @@ fun SetupScreen(
     val stash = remember { Stash.of(context) }
     val signedIn = stash.signedIn
 
-    var canPostNotifications by remember {
-        mutableStateOf(
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                ContextCompat.checkSelfPermission(context, POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED
-        )
-    }
+    val batteryFreedom = remember(context) {
+
     val batteryFreedom = remember(context) {
         context.getSystemService(PowerManager::class.java)
             ?.isIgnoringBatteryOptimizations(context.packageName) == true
@@ -71,7 +60,7 @@ fun SetupScreen(
         onResult = { canPostNotifications = it },
     )
 
-    val ready = signedIn && notificationAccess.value && canPostNotifications
+    val ready = signedIn && notificationAccess.value
 
     val unlockPulse = remember { Animatable(1f) }
     var wasReady by remember { mutableStateOf(ready) }
@@ -96,7 +85,6 @@ fun SetupScreen(
                 subtitle = stringResource(R.string.setup_subtitle),
             )
 
-            val wantsPostPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             var step = 1
 
             SectionHeader(stringResource(R.string.setup_required_header))
@@ -112,16 +100,6 @@ fun SetupScreen(
                         )
                     },
                 )
-                if (wantsPostPermission) {
-                    RowRule(inset = false)
-                    StepRow(
-                        index = step++,
-                        title = stringResource(R.string.setup_post_notifications_title),
-                        subtitle = stringResource(R.string.setup_post_notifications_blurb),
-                        done = canPostNotifications,
-                        onClick = { permissionAsk.launch(POST_NOTIFICATIONS) },
-                    )
-                }
                 RowRule(inset = false)
                 StepRow(
                     index = step++,

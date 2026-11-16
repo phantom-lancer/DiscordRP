@@ -7,11 +7,9 @@
     <string name="bridge_action_restart">Перезапустить</string>
     <string name="bridge_action_exit">Выйти</string>
     <string name="you_sign_out">Выйти из аккаунта</string>
-    <string name="setup_media_access_title">Разрешение на доступ к уведомлениям</string>
-    <string name="setup_media_access_blurb">Доступ к уведомлениям необходим для получения информации о медиа-контенте.</string>
-    <string name="setup_post_notifications_title">Доступ к отправке уведомлений</string>
-    <string name="setup_post_notifications_blurb">Выдайте право на отправку уведомлений</string>
-    <string name="setup_privacy_note">Данное приложение не собирает никакие пользовательские данные</string>
+    <string name="setup_media_access_title">Доступ к медиасессиям</string>
+    <string name="setup_media_access_blurb">Разрешает DiscordRP читать состояние плеера и получать обложки альбомов.</string>
+        <string name="setup_privacy_note">Данное приложение не собирает никакие пользовательские данные</string>
     <string name="setup_required_header">Обязательно</string>
     <string name="setup_optional_header">По желанию</string>
     <string name="facet_artist">Включить имя артиста</string>
