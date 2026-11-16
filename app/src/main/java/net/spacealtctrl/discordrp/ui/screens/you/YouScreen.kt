@@ -69,7 +69,7 @@ import net.spacealtctrl.discordrp.ui.kit.ShimmerBlock
 import net.spacealtctrl.discordrp.ui.theme.Look
 import net.spacealtctrl.discordrp.ui.theme.Pace
 
-private const val REPO_URL = "https://github.com/spacealtctrl/DiscordRP"
+private const val REPO_URL = "https://github.com/phantom-lancer/DiscordRP"
 
 @Composable
 fun YouScreen(

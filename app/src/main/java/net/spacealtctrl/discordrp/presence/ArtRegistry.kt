@@ -274,7 +274,7 @@ class ArtRegistry @Inject constructor(
         const val TAG = "ArtRegistry"
 
         const val ICON_BASE =
-            "https://raw.githubusercontent.com/spacealtctrl/DiscordRP/main/assets/icons"
+            "https://raw.githubusercontent.com/phantom-lancer/DiscordRP/main/assets/icons"
         const val ICON_REVISION = 2
 
         const val MISS_RETRY_MS = 5 * 60 * 1000L

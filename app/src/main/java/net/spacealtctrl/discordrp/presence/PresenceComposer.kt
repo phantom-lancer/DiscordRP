@@ -134,7 +134,7 @@ class PresenceComposer @Inject constructor(
         ).name
 
         const val GLYPH_BASE =
-            "https://raw.githubusercontent.com/spacealtctrl/DiscordRP/main/assets/glyphs"
+            "https://raw.githubusercontent.com/phantom-lancer/DiscordRP/main/assets/glyphs"
 
         fun arrangeLines(
             title: String,

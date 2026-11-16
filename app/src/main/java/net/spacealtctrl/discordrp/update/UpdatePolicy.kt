@@ -3,7 +3,7 @@ package net.spacealtctrl.discordrp.update
 import java.net.URI
 
 internal object UpdatePolicy {
-    const val REPO = "spacealtctrl/DiscordRP"
+    const val REPO = "phantom-lancer/DiscordRP"
     const val FEED_URL = "https://api.github.com/repos/$REPO/releases/latest"
 
     private const val ASSET_PREFIX = "/$REPO/releases/download/"
