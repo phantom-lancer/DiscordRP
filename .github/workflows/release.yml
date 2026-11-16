@@ -37,7 +37,7 @@ jobs:
             echo "Release signing is configured."
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "Release skipped: configure KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD in repository Actions secrets."
+            echo "Release skipped: configure KEYSTORE_BASE64, KEYSTORE_PASSWORD and KEY_ALIAS in repository Actions secrets. KEY_PASSWORD is optional when it matches KEYSTORE_PASSWORD."
           fi
 
   release:
