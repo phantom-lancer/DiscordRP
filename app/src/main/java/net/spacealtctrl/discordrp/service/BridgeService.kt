@@ -38,7 +38,6 @@ import net.spacealtctrl.discordrp.gateway.Gateway
 import net.spacealtctrl.discordrp.gateway.GatewayEngine
 import net.spacealtctrl.discordrp.gateway.GatewayEvent
 import net.spacealtctrl.discordrp.gateway.PresenceUpdate
-import net.spacealtctrl.discordrp.inbox.InboxNotifier
 import net.spacealtctrl.discordrp.log.AndroidAppLog
 import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.presence.ArtRegistry
@@ -56,7 +55,6 @@ class BridgeService : Service() {
     @Inject lateinit var scanner: PlaybackScanner
     @Inject lateinit var composer: PresenceComposer
     @Inject lateinit var artRegistry: ArtRegistry
-    @Inject lateinit var notifier: InboxNotifier
     @Inject lateinit var log: AppLog
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -75,7 +73,7 @@ class BridgeService : Service() {
     @Volatile private var lastNoticeKey: String? = null
 
     private lateinit var sessionManager: MediaSessionManager
-    private var watchedController: MediaController? = null
+    private var watchedControllers: List<MediaController> = emptyList()
     private var sessionsListenerAttached = false
 
     override fun onCreate() {
@@ -139,10 +137,11 @@ class BridgeService : Service() {
             netCallback = null
         }
         getSystemService(AlarmManager::class.java)?.cancel(watchdogIntent())
-        watchedController?.unregisterCallback(controllerWatcher)
+        watchedControllers.forEach { controller ->
+            runCatching { controller.unregisterCallback(controllerWatcher) }
+        }
         _alive.value = false
         BridgeFeed.serviceStopped()
-        notifier.reset()
         refreshJob?.cancel()
         redialJob?.cancel()
         scope.cancel()
@@ -166,10 +165,6 @@ class BridgeService : Service() {
         scope.launch {
             engine.events.collect { event ->
                 when (event) {
-                    is GatewayEvent.MessageArrived -> scope.launch {
-                        notifier.deliver(event.message)
-                    }
-                    is GatewayEvent.ChannelSeen -> notifier.conversationSeen(event.channelId)
                     is GatewayEvent.AuthRejected -> onAuthRejected()
                     is GatewayEvent.SessionReady -> Unit
                 }
@@ -184,7 +179,7 @@ class BridgeService : Service() {
             }
         }
 
-        log.info(TAG, "Opening the gateway for presence and push")
+        log.info(TAG, "Opening the gateway for music presence")
         engine.start()
     }
 
@@ -291,9 +286,13 @@ class BridgeService : Service() {
     }
 
     private fun rewatchController(controllers: List<MediaController>?) {
-        watchedController?.unregisterCallback(controllerWatcher)
-        watchedController = controllers?.firstOrNull()
-        watchedController?.registerCallback(controllerWatcher, mainHandler)
+        watchedControllers.forEach { controller ->
+            runCatching { controller.unregisterCallback(controllerWatcher) }
+        }
+        watchedControllers = controllers.orEmpty()
+        watchedControllers.forEach { controller ->
+            runCatching { controller.registerCallback(controllerWatcher, mainHandler) }
+        }
     }
 
     private val controllerWatcher = object : MediaController.Callback() {
@@ -465,7 +464,7 @@ class BridgeService : Service() {
         private const val WAKELOCK_TAG = "discordrp:bridge"
         private const val WAKELOCK_LEASE_MS = 50 * 60 * 1000L
         private const val WORK_LEASE_MS = 30 * 1000L
-        private const val SESSIONS_SETTLE_MS = 1_500L
+        private const val SESSIONS_SETTLE_MS = 250L
 
         private const val CHECKUP_INTERVAL_MS = 15 * 60 * 1000L
         private const val STUCK_GATEWAY_MS = 2 * 60 * 1000L

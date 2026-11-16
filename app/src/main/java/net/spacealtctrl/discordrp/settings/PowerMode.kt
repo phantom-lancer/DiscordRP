@@ -18,9 +18,9 @@ enum class PowerMode(val stored: String) {
 
     val playbackSettleMs: Long
         get() = when (this) {
-            SAVER -> 5_000L
-            BALANCED -> 1_000L
-            ALWAYS_ON -> 1_000L
+            SAVER -> 500L
+            BALANCED -> 150L
+            ALWAYS_ON -> 100L
         }
 
     companion object {

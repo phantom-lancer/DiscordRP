@@ -12,6 +12,7 @@ data class NowPlaying(
     val appLabel: String,
     val appPackage: String,
     val artwork: Bitmap? = null,
+    val artworkUrl: String? = null,
     val playing: Boolean = false,
     val stopped: Boolean = false,
     val startedAtMillis: Long? = null,
@@ -25,7 +26,8 @@ data class NowPlaying(
             appPackage == other.appPackage &&
             title == other.title &&
             artist == other.artist &&
-            album == other.album
+            album == other.album &&
+            artworkUrl == other.artworkUrl
 }
 
 @Immutable

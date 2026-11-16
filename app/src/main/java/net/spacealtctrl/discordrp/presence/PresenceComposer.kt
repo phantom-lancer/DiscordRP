@@ -78,6 +78,7 @@ class PresenceComposer @Inject constructor(
             album = track.album,
             title = track.title,
             durationMillis = track.durationMillis,
+            artworkUrl = track.artworkUrl,
         ).takeIf { !track.album.isNullOrBlank() || track.title.isNotBlank() }
         val icon = ArtSource.AppIcon(track.appPackage).takeIf { stash.showAppIcon }
 

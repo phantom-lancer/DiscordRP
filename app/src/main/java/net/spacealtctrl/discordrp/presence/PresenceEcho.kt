@@ -5,7 +5,7 @@ import net.spacealtctrl.discordrp.gateway.PresenceUpdate
 import kotlin.math.abs
 
 object PresenceEcho {
-    const val TIMELINE_TOLERANCE_MS = 5_000L
+    const val TIMELINE_TOLERANCE_MS = 250L
 
     fun isEcho(
         previous: PresenceUpdate?,

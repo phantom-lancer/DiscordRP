@@ -335,8 +335,8 @@ class Stash private constructor(
         private const val KEY_AUTOSTART = "app.start_on_boot"
         private const val KEY_SETUP_DONE = "app.setup_complete"
 
-        private const val KEY_ICON_ASSETS = "art.icon_assets.v2"
-        private const val KEY_COVER_ASSETS = "art.cover_assets.v5"
+        private const val KEY_ICON_ASSETS = "art.icon_assets.v3"
+        private const val KEY_COVER_ASSETS = "art.cover_assets.v6"
         private const val KEY_COVER_MISSES = "art.cover_misses.v5"
         private const val KEY_COVER_ALBUM_MISSES = "art.cover_album_misses.v1"
         private const val KEY_COVER_DEEZER_ASSETS = "art.cover_deezer_assets.v1"
@@ -354,7 +354,9 @@ class Stash private constructor(
             "art.cover_misses.v3",
             "art.cover_assets.v4",
             "art.cover_misses.v4",
+            "art.cover_assets.v5",
             "art.icon_assets",
+            "art.icon_assets.v2",
         )
         private const val KEY_ART_PURGED_AT = "art.purged_at"
 
@@ -369,6 +371,7 @@ class Stash private constructor(
             "com.rhapsody",
             "com.soundcloud.android",
             "com.spotify.music",
+            "ru.yandex.music",
             "deezer.android.app",
         )
 
