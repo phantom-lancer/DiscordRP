@@ -176,9 +176,9 @@
     <string name="cover_add_sent">Sent to MusicBrainz. Discord shows it once the Cover Art Archive has it.</string>
     <string name="presence_covers_title">Album covers</string>
     <string name="cover_source_musicbrainz">MusicBrainz</string>
-    <string name="cover_source_musicbrainz_blurb">Covers from MusicBrainz and the Cover Art Archive only.</string>
+    <string name="cover_source_musicbrainz_blurb">Player artwork first. If unavailable, use MusicBrainz and the Cover Art Archive.</string>
     <string name="cover_source_musicbrainz_deezer">MusicBrainz (+ Deezer backup)</string>
-    <string name="cover_source_musicbrainz_deezer_blurb">MusicBrainz first. When it has no cover, Deezer fills in.</string>
+    <string name="cover_source_musicbrainz_deezer_blurb">Player artwork first, then MusicBrainz. Deezer fills in when both have no cover.</string>
     <string name="album_add_action">Add this album to MusicBrainz</string>
     <string name="album_add_title">Add album</string>
     <string name="album_add_failed">Could not get this album from Deezer. Try again later.</string>

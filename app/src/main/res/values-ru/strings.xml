@@ -25,4 +25,6 @@
     <string name="tile_stopped_toast">Все сервисы остановлены</string>
     <string name="tile_off_subtitle">Отключено</string>
     <string name="tile_on_subtitle">Включено</string>
+    <string name="cover_source_musicbrainz_blurb">Сначала обложка из плеера. Если её нет, используется MusicBrainz и Cover Art Archive.</string>
+    <string name="cover_source_musicbrainz_deezer_blurb">Сначала обложка плеера, затем MusicBrainz. Deezer используется, если обеих обложек нет.</string>
 </resources>
