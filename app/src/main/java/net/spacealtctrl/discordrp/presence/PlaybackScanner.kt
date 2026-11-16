@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.service.MediaNoticeListener
 import net.spacealtctrl.discordrp.settings.Stash
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 class PlaybackScanner @Inject constructor(
@@ -18,6 +19,7 @@ class PlaybackScanner @Inject constructor(
     private val log: AppLog,
 ) {
     private val listenerComponent = ComponentName(context, MediaNoticeListener::class.java)
+    private val appLabels = ConcurrentHashMap<String, String>()
 
     fun currentTrack(): NowPlaying? {
         val manager =
@@ -43,7 +45,9 @@ class PlaybackScanner @Inject constructor(
         val state = controller.playbackState?.state
         if (state == PlaybackState.STATE_STOPPED || state == PlaybackState.STATE_NONE) return null
 
-        val playing = state == PlaybackState.STATE_PLAYING
+        val playing = state == PlaybackState.STATE_PLAYING ||
+            state == PlaybackState.STATE_FAST_FORWARDING ||
+            state == PlaybackState.STATE_REWINDING
         val paused = state == PlaybackState.STATE_PAUSED
         if (stash.hideWhenPaused && paused) return null
 
@@ -115,10 +119,11 @@ class PlaybackScanner @Inject constructor(
     private fun MediaMetadata.bitmap(key: String) =
         runCatching { getBitmap(key) }.getOrNull()
 
-    private fun labelFor(packageName: String): String = runCatching {
-        val pm = context.packageManager
-        pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
-    }.getOrDefault(packageName)
+    private fun labelFor(packageName: String): String =
+        appLabels[packageName] ?: runCatching {
+            val pm = context.packageManager
+            pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+        }.getOrDefault(packageName).also { appLabels.putIfAbsent(packageName, it) }
 
     private companion object {
         const val TAG = "PlaybackScanner"
