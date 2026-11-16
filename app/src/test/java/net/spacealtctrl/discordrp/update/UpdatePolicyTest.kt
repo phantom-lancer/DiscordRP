@@ -10,10 +10,10 @@ class UpdatePolicyTest {
     private val digest = "a".repeat(64)
 
     @Test
-    fun acceptsOnlyUpstreamReleaseAssets() {
+    fun acceptsOnlyForkReleaseAssets() {
         assertTrue(
             UpdatePolicy.isTrustedApkUrl(
-                "https://github.com/spacealtctrl/DiscordRP/releases/download/v1.6.0/app.apk",
+                "https://github.com/phantom-lancer/DiscordRP/releases/download/v1.6.0/app.apk",
             ),
         )
         assertFalse(
@@ -23,22 +23,22 @@ class UpdatePolicyTest {
         )
         assertFalse(
             UpdatePolicy.isTrustedApkUrl(
-                "http://github.com/spacealtctrl/DiscordRP/releases/download/v1.6.0/app.apk",
+                "http://github.com/phantom-lancer/DiscordRP/releases/download/v1.6.0/app.apk",
             ),
         )
         assertFalse(
             UpdatePolicy.isTrustedApkUrl(
-                "https://github.com.evil.test/spacealtctrl/DiscordRP/releases/download/v1.6.0/app.apk",
+                "https://github.com.evil.test/phantom-lancer/DiscordRP/releases/download/v1.6.0/app.apk",
             ),
         )
         assertFalse(
             UpdatePolicy.isTrustedApkUrl(
-                "https://user@github.com/spacealtctrl/DiscordRP/releases/download/v1.6.0/app.apk",
+                "https://user@github.com/phantom-lancer/DiscordRP/releases/download/v1.6.0/app.apk",
             ),
         )
         assertFalse(
             UpdatePolicy.isTrustedApkUrl(
-                "https://github.com:8443/spacealtctrl/DiscordRP/releases/download/v1.6.0/app.apk",
+                "https://github.com:8443/phantom-lancer/DiscordRP/releases/download/v1.6.0/app.apk",
             ),
         )
     }
@@ -56,7 +56,7 @@ class UpdatePolicyTest {
 
     @Test
     fun acceptsOnlyGitHubRedirectTargets() {
-        val asset = "https://github.com/spacealtctrl/DiscordRP/releases/download/v1.6.0/app.apk"
+        val asset = "https://github.com/phantom-lancer/DiscordRP/releases/download/v1.6.0/app.apk"
         assertTrue(UpdatePolicy.isTrustedDownloadUrl(asset, asset))
         assertTrue(
             UpdatePolicy.isTrustedDownloadUrl(
