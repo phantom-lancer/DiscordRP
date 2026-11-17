@@ -8,7 +8,7 @@ enum class CoverSource(val stored: String) {
 
     companion object {
         fun fromStored(value: String?): CoverSource = when (value) {
-            "musicbrainz", "musicbrainz_deezer" -> MUSICBRAINZ
+            "musicbrainz", "musicbrainz_deezer", "deezer" -> MUSICBRAINZ
             else -> PLAYER
         }
     }
