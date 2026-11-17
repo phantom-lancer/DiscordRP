@@ -1,11 +1,15 @@
 package net.spacealtctrl.discordrp.ui.screens.presence
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,9 +30,14 @@ import androidx.compose.material.icons.rounded.PhoneAndroid
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Title
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -58,6 +67,7 @@ import net.spacealtctrl.discordrp.ui.kit.SectionHeader
 import net.spacealtctrl.discordrp.ui.kit.ShimmerBlock
 import net.spacealtctrl.discordrp.ui.kit.ThumbSwitch
 import net.spacealtctrl.discordrp.ui.kit.ToggleRow
+import net.spacealtctrl.discordrp.ui.kit.TapRow
 import net.spacealtctrl.discordrp.ui.kit.moodLabel
 import net.spacealtctrl.discordrp.ui.theme.Look
 import net.spacealtctrl.discordrp.ui.theme.Pace
@@ -66,6 +76,21 @@ import net.spacealtctrl.discordrp.ui.theme.Pace
 fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsState()
     val query by viewModel.query.collectAsState()
+    val context = LocalContext.current
+    var selectedCustomArtwork by remember { mutableStateOf<Uri?>(null) }
+    var customArtworkNotice by remember { mutableStateOf(false) }
+    val customArtworkPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+            }
+            selectedCustomArtwork = uri
+            customArtworkNotice = true
+        }
+    }
 
     AppScreen {
         LazyColumn(
@@ -102,6 +127,62 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
                         onPick = viewModel::pickCoverSource,
                         icon = Icons.Rounded.Image,
                     )
+                }
+            }
+
+            item {
+                SectionHeader(stringResource(R.string.custom_cover_header))
+                Cluster {
+                    ToggleRow(
+                        title = stringResource(R.string.custom_cover_enable),
+                        subtitle = if (state.customArtworkUrl.isNotBlank()) {
+                            stringResource(R.string.custom_cover_selected)
+                        } else {
+                            stringResource(R.string.custom_cover_choose_first)
+                        },
+                        icon = Icons.Rounded.Image,
+                        checked = state.customArtworkEnabled,
+                        enabled = state.customArtworkUrl.isNotBlank() && !state.customArtworkUploading,
+                        onToggle = { viewModel.setCustomArtworkEnabled(!state.customArtworkEnabled) },
+                    )
+                    RowRule()
+                    TapRow(
+                        title = stringResource(
+                            if (state.customArtworkUrl.isBlank()) R.string.custom_cover_choose
+                            else R.string.custom_cover_replace
+                        ),
+                        subtitle = when {
+                            state.customArtworkUploading -> stringResource(R.string.custom_cover_uploading)
+                            state.customArtworkUrl.isNotBlank() -> stringResource(R.string.custom_cover_ready)
+                            else -> stringResource(R.string.custom_cover_hint)
+                        },
+                        icon = Icons.Rounded.Image,
+                        onClick = { if (!state.customArtworkUploading) customArtworkPicker.launch(arrayOf("image/*")) },
+                        trailing = {
+                            if (state.customArtworkUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = state.customArtworkUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(42.dp),
+                                )
+                            }
+                        },
+                    )
+                    if (state.customArtworkUploading) {
+                        androidx.compose.material3.LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Look.gaps.room, vertical = Look.gaps.snug),
+                        )
+                    }
+                    state.customArtworkError?.let { error ->
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Look.palette.danger,
+                            modifier = Modifier.padding(horizontal = Look.gaps.room, vertical = Look.gaps.snug),
+                        )
+                    }
                 }
             }
 
@@ -210,6 +291,38 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
             }
         }
     }
+
+    if (customArtworkNotice && selectedCustomArtwork != null) {
+        AlertDialog(
+            onDismissRequest = {
+                customArtworkNotice = false
+                selectedCustomArtwork = null
+            },
+            title = { Text(stringResource(R.string.custom_cover_upload_notice_title)) },
+            text = { Text(stringResource(R.string.custom_cover_upload_notice_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        selectedCustomArtwork?.let(viewModel::uploadCustomArtwork)
+                        selectedCustomArtwork = null
+                        customArtworkNotice = false
+                    },
+                ) {
+                    Text(stringResource(R.string.custom_cover_upload_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        customArtworkNotice = false
+                        selectedCustomArtwork = null
+                    },
+                ) {
+                    Text(stringResource(R.string.common_cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -280,11 +393,11 @@ private fun ShareFacet.icon(): ImageVector = when (this) {
 }
 
 private fun CoverSource.labelRes(): Int = when (this) {
+    CoverSource.PLAYER -> R.string.cover_source_player
     CoverSource.MUSICBRAINZ -> R.string.cover_source_musicbrainz
-    CoverSource.MUSICBRAINZ_DEEZER -> R.string.cover_source_musicbrainz_deezer
 }
 
 private fun CoverSource.blurbRes(): Int = when (this) {
+    CoverSource.PLAYER -> R.string.cover_source_player_blurb
     CoverSource.MUSICBRAINZ -> R.string.cover_source_musicbrainz_blurb
-    CoverSource.MUSICBRAINZ_DEEZER -> R.string.cover_source_musicbrainz_deezer_blurb
 }
