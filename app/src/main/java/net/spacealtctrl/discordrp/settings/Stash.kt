@@ -18,6 +18,16 @@ class Stash private constructor(
     private val prefs: SharedPreferences =
         context.applicationContext.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
+    init {
+        if (!prefs.getBoolean(KEY_YAYMA_DEFAULT_ADDED, false)) {
+            val editor = prefs.edit().putBoolean(KEY_YAYMA_DEFAULT_ADDED, true)
+            prefs.getStringSet(KEY_PLAYERS, null)?.let { existing ->
+                editor.putStringSet(KEY_PLAYERS, existing + YAYMA_PACKAGE)
+            }
+            editor.apply()
+        }
+    }
+
     private val json = Json { ignoreUnknownKeys = true }
 
     private val _revisions = MutableStateFlow(0)
@@ -336,6 +346,7 @@ class Stash private constructor(
         private const val KEY_TITLE_SONG = "presence.song_as_title"
         private const val KEY_TITLE_ARTIST = "presence.artist_as_title"
         private const val KEY_PLAYERS = "presence.players"
+        private const val KEY_YAYMA_DEFAULT_ADDED = "presence.yayma_default_added.v1"
         private const val KEY_VIDEO_DROPPED = "presence.video_players_dropped"
 
         private const val KEY_ALERTS_ON = "alerts.enabled"
@@ -376,6 +387,8 @@ class Stash private constructor(
         private const val KEY_ART_PURGED_AT = "art.purged_at"
 
         private val DAY_MS = 24.hours.inWholeMilliseconds
+
+        private const val YAYMA_PACKAGE = "io.github.darkplayoff.yayma"
 
         private val STREAMING_SERVICES = setOf(
             "com.amazon.mp3",
