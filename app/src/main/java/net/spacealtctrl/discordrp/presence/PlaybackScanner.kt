@@ -2,6 +2,8 @@ package net.spacealtctrl.discordrp.presence
 
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -56,6 +58,11 @@ class PlaybackScanner @Inject constructor(
             MediaMetadata.METADATA_KEY_TITLE,
             MediaMetadata.METADATA_KEY_DISPLAY_TITLE,
         ) ?: return null
+        val artworkUri = metadata.firstText(
+            MediaMetadata.METADATA_KEY_ALBUM_ART_URI,
+            MediaMetadata.METADATA_KEY_ART_URI,
+            MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI,
+        )
         val timeline = timeline(controller, playing, metadata)
 
         return NowPlaying(
@@ -74,13 +81,10 @@ class PlaybackScanner @Inject constructor(
             appLabel = labelFor(controller.packageName),
             appPackage = controller.packageName,
             artwork = metadata.bitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-                ?: metadata.bitmap(MediaMetadata.METADATA_KEY_ART),
-            artworkUrl = ArtworkUrls.normalize(
-                metadata.firstText(
-                    MediaMetadata.METADATA_KEY_ALBUM_ART_URI,
-                    MediaMetadata.METADATA_KEY_ART_URI,
-                ),
-            ),
+                ?: metadata.bitmap(MediaMetadata.METADATA_KEY_ART)
+                ?: metadata.bitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
+                ?: artworkUri?.let(::readLocalArtwork),
+            artworkUrl = ArtworkUrls.normalize(artworkUri),
             playing = playing,
             stopped = false,
             startedAtMillis = timeline?.first,
@@ -89,6 +93,25 @@ class PlaybackScanner @Inject constructor(
         )
     }
 
+    private fun readLocalArtwork(rawUri: String) = runCatching {
+        val uri = Uri.parse(rawUri)
+        if (uri.scheme != "content") return@runCatching null
+
+        val resolver = context.contentResolver
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        val boundsStream = resolver.openInputStream(uri) ?: return@runCatching null
+        boundsStream.use { BitmapFactory.decodeStream(it, null, bounds) }
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@runCatching null
+
+        var sample = 1
+        while (bounds.outWidth / sample > MAX_LOCAL_ART_SIDE ||
+            bounds.outHeight / sample > MAX_LOCAL_ART_SIDE
+        ) {
+            sample *= 2
+        }
+        val options = BitmapFactory.Options().apply { inSampleSize = sample }
+        resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
+    }.getOrNull()
     private fun playbackPriority(state: Int?): Int = when (state) {
         PlaybackState.STATE_PLAYING -> 0
         PlaybackState.STATE_BUFFERING,
@@ -127,5 +150,6 @@ class PlaybackScanner @Inject constructor(
 
     private companion object {
         const val TAG = "PlaybackScanner"
+        const val MAX_LOCAL_ART_SIDE = 1_024
     }
 }
