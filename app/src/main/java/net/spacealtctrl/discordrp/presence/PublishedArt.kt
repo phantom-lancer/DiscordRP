@@ -16,11 +16,13 @@ data class PublishedArt(
 object DiscordMedia {
     private const val PROXY = "https://media.discordapp.net/"
 
-    fun url(ref: String?): String? = ref
-        ?.takeIf { it.startsWith("mp:") }
-        ?.removePrefix("mp:")
-        ?.takeIf { it.isNotBlank() }
-        ?.let { PROXY + it }
+    fun url(ref: String?): String? {
+        val value = ref?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        if (value.startsWith("mp:")) {
+            return value.removePrefix("mp:").takeIf { it.isNotBlank() }?.let { PROXY + it }
+        }
+        return ArtworkUrls.normalize(value)
+    }
 
     fun thumbnail(ref: String?): String? = url(ref)?.let { "$it?width=64&height=64" }
 }
