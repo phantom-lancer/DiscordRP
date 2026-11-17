@@ -34,6 +34,7 @@ class PresenceComposer @Inject constructor(
             artist = artistForLayout(
                 title = track.title,
                 artist = track.artist,
+                albumArtist = track.albumArtist,
                 showArtist = stash.showArtist,
                 artistAsTitle = stash.artistAsTitle,
             ),
@@ -125,7 +126,8 @@ class PresenceComposer @Inject constructor(
     private fun coverKey(track: NowPlaying): String {
         val artist = track.albumArtist ?: track.artist
         val album = track.album?.takeIf { it.isNotBlank() }
-        return if (album != null) "$artist|$album".lowercase() else "$artist|song:${track.title}".lowercase()
+        return if (album != null) artist.orEmpty() + "|" + album
+        else artist.orEmpty() + "|song:" + track.title
     }
 
     companion object {
@@ -136,6 +138,7 @@ class PresenceComposer @Inject constructor(
             artist = artistForLayout(
                 title = track.title,
                 artist = track.artist,
+                albumArtist = track.albumArtist,
                 showArtist = stash.showArtist,
                 artistAsTitle = stash.artistAsTitle,
             ),
@@ -151,10 +154,11 @@ class PresenceComposer @Inject constructor(
         internal fun artistForLayout(
             title: String,
             artist: String?,
+            albumArtist: String?,
             showArtist: Boolean,
             artistAsTitle: Boolean,
         ): String? = if (showArtist || artistAsTitle) {
-            distinctMetadataText(title, artist)
+            distinctMetadataText(title, artist, albumArtist)
         } else {
             null
         }
@@ -166,30 +170,28 @@ class PresenceComposer @Inject constructor(
             appLabel: String,
             showAppName: Boolean,
             artistAsTitle: Boolean,
-        ): ActivityLines = when {
-            artistAsTitle -> {
-                val visibleArtist = artist?.trim()?.takeIf {
-                    it.isNotEmpty() && !it.equals(title.trim(), ignoreCase = true)
-                }
-                ActivityLines(
+        ): ActivityLines {
+            val visibleArtist = distinctMetadataText(title, artist)
+            return when {
+                artistAsTitle -> ActivityLines(
                     name = visibleArtist ?: title,
                     details = title.takeIf { visibleArtist != null },
                     state = album,
                     largeText = appLabel.takeIf { showAppName },
                 )
+                showAppName -> ActivityLines(
+                    name = appLabel,
+                    details = title,
+                    state = visibleArtist,
+                    largeText = album,
+                )
+                else -> ActivityLines(
+                    name = title,
+                    details = visibleArtist,
+                    state = album,
+                    largeText = null,
+                )
             }
-            showAppName -> ActivityLines(
-                name = appLabel,
-                details = title,
-                state = artist,
-                largeText = album,
-            )
-            else -> ActivityLines(
-                name = title,
-                details = artist,
-                state = album,
-                largeText = null,
-            )
         }
     }
 }
