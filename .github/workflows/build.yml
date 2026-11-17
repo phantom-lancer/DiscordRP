@@ -30,6 +30,17 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      - name: Restore persistent signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [[ -n "$KEYSTORE_BASE64" ]]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "Persistent APK signing key restored."
+          else
+            echo "No persistent key configured; this run will use the runner debug key."
+          fi
+
       - name: Unit tests
         run: ./gradlew testDebugUnitTest
 
@@ -37,18 +48,36 @@ jobs:
         run: ./gradlew lintDebug
 
       - name: Assemble debug APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleDebug
 
       - name: Assemble release APK
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
       - name: Collect APKs
         run: |
+          set -euo pipefail
           mkdir -p dist
           cp app/build/outputs/apk/debug/*.apk dist/DiscordRP-debug.apk
           RELEASE_APK=$(find app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -print -quit)
           test -n "$RELEASE_APK"
-          cp "$RELEASE_APK" dist/DiscordRP-release-unsigned.apk
+          if [[ -s "$RUNNER_TEMP/release.jks" ]]; then
+            cp "$RELEASE_APK" dist/DiscordRP-release.apk
+            APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+            "$APKSIGNER" verify dist/DiscordRP-debug.apk
+            "$APKSIGNER" verify dist/DiscordRP-release.apk
+          else
+            cp "$RELEASE_APK" dist/DiscordRP-release-unsigned.apk
+          fi
 
       - name: Upload APKs
         uses: actions/upload-artifact@v7
@@ -56,3 +85,7 @@ jobs:
           name: discordrp-android-apks
           path: dist/*.apk
           if-no-files-found: error
+
+      - name: Remove temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
