@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.spacealtctrl.discordrp.presence.ArtRegistry
+import net.spacealtctrl.discordrp.presence.ExternalArtworkHost
 import net.spacealtctrl.discordrp.presence.BridgeFeed
 import net.spacealtctrl.discordrp.presence.NowPlaying
 import net.spacealtctrl.discordrp.service.BridgeService
@@ -53,7 +54,7 @@ enum class BadgeMode { APP_ICON, GLYPH, NONE }
 data class PresenceUiState(
     val sharing: Boolean = true,
     val mood: Mood = Mood.ONLINE,
-    val coverSource: CoverSource = CoverSource.MUSICBRAINZ,
+    val coverSource: CoverSource = CoverSource.PLAYER,
     val mobileBadge: Boolean = true,
     val facets: Map<ShareFacet, Boolean> = emptyMap(),
     val players: List<PlayerChoice> = emptyList(),
