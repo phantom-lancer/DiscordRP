@@ -217,12 +217,16 @@ class PresenceViewModel @Inject constructor(
     fun setBitmapArtworkUploadEnabled(enabled: Boolean) {
         if (stash.bitmapArtworkUploadEnabled == enabled) return
         stash.bitmapArtworkUploadEnabled = enabled
-        if (enabled) nudgeBridge()
+        if (enabled) {
+            artRegistry.artworkHostingChanged()
+            nudgeBridge()
+        }
     }
 
     fun saveCatboxUserHash(value: String) {
         if (value.isBlank()) return
         stash.catboxUserHash = value
+        artRegistry.artworkHostingChanged()
         nudgeBridge()
     }
 
