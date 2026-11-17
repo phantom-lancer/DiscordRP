@@ -5,8 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.DisplayMetrics
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.spacealtctrl.discordrp.discord.ApiRefusal
-import net.spacealtctrl.discordrp.discord.DiscordApi
 import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.settings.Stash
 import java.util.concurrent.ConcurrentHashMap
@@ -25,17 +23,19 @@ sealed interface ArtSource {
         val title: String? = null,
         val durationMillis: Long? = null,
         val artworkUrl: String? = null,
+        val artwork: Bitmap? = null,
     ) : ArtSource
 
     data class AppIcon(val packageName: String) : ArtSource
+
+    data object DefaultIcon : ArtSource
 }
 
 @Singleton
 class ArtRegistry @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val api: DiscordApi,
     private val coverLookup: CoverLookup,
-    private val deezerCovers: DeezerCovers,
+    private val externalArtworkHost: ExternalArtworkHost,
     private val stash: Stash,
     private val log: AppLog,
 ) {
@@ -49,28 +49,45 @@ class ArtRegistry @Inject constructor(
         is ArtSource.Remote -> register(source.url, source.cacheKey, coverGeneration.get())
         is ArtSource.Cover -> resolveCover(source)
         is ArtSource.AppIcon -> resolveAppIcon(source)
+        ArtSource.DefaultIcon -> defaultIconUrl()
     }
 
     private suspend fun resolveCover(cover: ArtSource.Cover): String? {
         val generation = coverGeneration.get()
         val directArtwork = ArtworkUrls.normalize(cover.artworkUrl)
         if (directArtwork != null) {
-            val hosted = store(directArtwork, cover.cacheKey, generation)
-            if (hosted != null) {
+            val direct = store(directArtwork, cover.cacheKey, generation)
+            if (direct != null) {
                 forgetMiss(cover.cacheKey)
                 unavailableStreak.remove(cover.cacheKey)
-                return hosted
+                return direct
             }
-            log.warn(TAG, "Could not register the player's artwork with Discord")
         }
 
         val cached = stash.coverAssets[cover.cacheKey]
-        if (!stash.powerMode.fetchesRemoteArt) return cached
-        uploadedGroup(cover.cacheKey)?.let { group ->
-            checkUpload(cover.cacheKey, group, generation)?.let { return it }
+        if (cached != null && (cached.startsWith("mp:") || ArtworkUrls.normalize(cached) != null)) {
+            return cached
         }
-        if (cached != null) return cached
+
+        val bitmap = cover.artwork
+        if (bitmap != null && stash.powerMode.fetchesRemoteArt && !unavailableIsFresh(cover.cacheKey)) {
+            val uploaded = runCatching {
+                externalArtworkHost.uploadBitmapOnUnmeteredNetwork(bitmap)
+            }.onFailure {
+                log.warn(TAG, "Could not upload bitmap artwork: " + it.javaClass.simpleName)
+            }.getOrNull()
+            if (uploaded != null && !isStale(generation)) {
+                stash.coverAssets = stash.coverAssets + (cover.cacheKey to uploaded)
+                forgetMiss(cover.cacheKey)
+                unavailableStreak.remove(cover.cacheKey)
+                return uploaded
+            }
+        }
+
+        if (!stash.coverSource.usesMusicBrainzFallback || !stash.powerMode.fetchesRemoteArt) return null
         if (unavailableIsFresh(cover.cacheKey)) return null
+        if (missIsFresh(cover.cacheKey)) return null
+
         val request = CoverRequest(
             artist = cover.artist,
             albumArtist = cover.albumArtist,
@@ -78,48 +95,17 @@ class ArtRegistry @Inject constructor(
             title = cover.title,
             durationMillis = cover.durationMillis,
         )
-        if (missIsFresh(cover.cacheKey)) {
-            if (deezerMissIsFresh(cover.cacheKey)) return null
-            return backupFor(request, cover.cacheKey, cover.cacheKey in stash.coverAlbumMisses, generation)
-        }
-        val result = coverLookup.cover(request)
-        if (isStale(generation)) return null
-        return when (result) {
-            is CoverResult.Found ->
-                register(result.url, cover.cacheKey, generation)?.also { forgetMiss(cover.cacheKey) }
-                    ?: markUnavailable(cover.cacheKey, generation)
-            is CoverResult.Missing -> {
-                rememberMiss(cover.cacheKey, result)
-                backupFor(request, cover.cacheKey, result.albumMissing, generation)
-            }
-            CoverResult.Unavailable -> markUnavailable(cover.cacheKey, generation)
-        }
-    }
-
-    private suspend fun backupFor(
-        request: CoverRequest,
-        cacheKey: String,
-        albumMissing: Boolean,
-        generation: Int,
-    ): String? {
-        if (!stash.coverSource.deezerBackup) return null
-        val backup = deezerCovers.cover(request)
-        if (isStale(generation)) return null
-        return when (backup) {
+        return when (val result = coverLookup.cover(request)) {
             is CoverResult.Found -> {
-                val reference = store(backup.url, cacheKey, generation)
-                    ?: return markUnavailable(cacheKey, generation)
-                stash.coverDeezerAssets = stash.coverDeezerAssets + cacheKey
-                backup.deezerAlbumId?.takeIf { albumMissing }?.let { album ->
-                    stash.coverDeezerAlbums = stash.coverDeezerAlbums + (cacheKey to album.toString())
-                }
-                reference
+                if (isStale(generation)) return null
+                store(result.url, cover.cacheKey, generation)?.also { forgetMiss(cover.cacheKey) }
+                    ?: markUnavailable(cover.cacheKey, generation)
             }
             is CoverResult.Missing -> {
-                stash.coverDeezerMisses = stash.coverDeezerMisses + (cacheKey to System.currentTimeMillis())
+                if (!isStale(generation)) rememberMiss(cover.cacheKey, result)
                 null
             }
-            CoverResult.Unavailable -> markUnavailable(cacheKey, generation)
+            CoverResult.Unavailable -> markUnavailable(cover.cacheKey, generation)
         }
     }
 
@@ -139,11 +125,6 @@ class ArtRegistry @Inject constructor(
         unavailableStreak.clear()
         stash.coverDeezerMisses = emptyMap()
         if (!stash.coverSource.deezerBackup) stash.dropDeezerCovers()
-    }
-
-    private fun deezerMissIsFresh(cacheKey: String, now: Long = System.currentTimeMillis()): Boolean {
-        val missedAt = stash.coverDeezerMisses[cacheKey] ?: return false
-        return now - missedAt in 0 until MISS_RETRY_MS
     }
 
     private fun unavailableIsFresh(cacheKey: String, now: Long = System.currentTimeMillis()): Boolean {
@@ -232,22 +213,11 @@ class ArtRegistry @Inject constructor(
     }
 
     private suspend fun resolveAppIcon(icon: ArtSource.AppIcon): String? {
-        stash.appIconAssets[icon.packageName]?.let { return it.takeIf(String::isNotBlank) }
-        if (!stash.powerMode.fetchesRemoteArt) return null
-
-        val name = HostedIcons.nameFor(icon.packageName)
-        val result = api.hostedAssetFor("$ICON_BASE/$name.png?v=$ICON_REVISION")
-        val reference = result.getOrNull()
-        when {
-            reference != null ->
-                stash.appIconAssets = stash.appIconAssets + (icon.packageName to reference)
-            result.exceptionOrNull() is ApiRefusal -> {
-                log.warn(TAG, "No hosted icon for " + icon.packageName)
-                stash.appIconAssets = stash.appIconAssets + (icon.packageName to "")
-            }
-        }
-        return reference
+        val name = HostedIcons.nameFor(icon.packageName) ?: return defaultIconUrl()
+        return ICON_BASE + "/" + name + ".png?v=" + ICON_REVISION
     }
+
+    private fun defaultIconUrl(): String = ICON_BASE + "/discordrp.png?v=" + ICON_REVISION
 
     private suspend fun register(url: String, cacheKey: String, generation: Int): String? {
         stash.coverAssets[cacheKey]?.let { return it }
@@ -255,21 +225,11 @@ class ArtRegistry @Inject constructor(
     }
 
     private suspend fun store(url: String, cacheKey: String, generation: Int): String? {
-        if (!stash.powerMode.fetchesRemoteArt) return null
-        for (candidate in CoverUrls.displayCandidates(url)) {
-            val reference = api.hostedAssetFor(candidate)
-                .onFailure { log.warn(TAG, "Discord refused $candidate: " + it.message) }
-                .getOrNull() ?: continue
-            if (api.mediaShows(reference) == false) {
-                log.warn(TAG, "Discord cannot show " + candidate)
-                continue
-            }
-            if (isStale(generation)) return null
-            stash.coverAssets = stash.coverAssets + (cacheKey to reference)
-            unavailableStreak.remove(cacheKey)
-            return reference
-        }
-        return null
+        val direct = ArtworkUrls.normalize(url) ?: return null
+        if (isStale(generation)) return null
+        stash.coverAssets = stash.coverAssets + (cacheKey to direct)
+        unavailableStreak.remove(cacheKey)
+        return direct
     }
 
     fun iconBitmap(packageName: String): Bitmap? = runCatching {
@@ -294,7 +254,7 @@ class ArtRegistry @Inject constructor(
 
         const val ICON_BASE =
             "https://raw.githubusercontent.com/phantom-lancer/DiscordRP/main/assets/icons"
-        const val ICON_REVISION = 2
+        const val ICON_REVISION = 3
 
         const val MISS_RETRY_MS = 5 * 60 * 1000L
         const val UNAVAILABLE_RETRY_MS = 2 * 60 * 1000L
