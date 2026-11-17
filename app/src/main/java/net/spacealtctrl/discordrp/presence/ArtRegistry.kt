@@ -84,8 +84,15 @@ class ArtRegistry @Inject constructor(
             }
         }
 
-        if (!stash.coverSource.usesMusicBrainzFallback || !stash.powerMode.fetchesRemoteArt) return null
+        if (!stash.coverSource.usesMusicBrainzFallback ||
+            !stash.powerMode.fetchesRemoteArt ||
+            !externalArtworkHost.canUseUnmeteredNetwork()
+        ) return null
         if (unavailableIsFresh(cover.cacheKey)) return null
+
+        uploadedGroup(cover.cacheKey)?.let { groupId ->
+            checkUpload(cover.cacheKey, groupId, generation)?.let { return it }
+        }
         if (missIsFresh(cover.cacheKey)) return null
 
         val request = CoverRequest(
