@@ -62,6 +62,9 @@ class BridgeService : Service() {
 
     private var gateway: Gateway? = null
     private var refreshJob: Job? = null
+    private val refreshGuard = Any()
+    private var refreshScheduled = false
+    private var pendingRefreshDelay = NO_REFRESH_DELAY
     private var redialJob: Job? = null
     private var artRetryJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -306,10 +309,24 @@ class BridgeService : Service() {
     }
 
     private fun scheduleRefresh(delayMs: Long) {
-        refreshJob?.cancel()
-        refreshJob = scope.launch {
-            if (delayMs > 0) delay(delayMs)
-            refresh()
+        synchronized(refreshGuard) {
+            pendingRefreshDelay = minOf(pendingRefreshDelay, delayMs)
+            if (refreshScheduled) return
+            refreshScheduled = true
+            refreshJob = scope.launch {
+                while (true) {
+                    val waitMs = synchronized(refreshGuard) {
+                        if (pendingRefreshDelay == NO_REFRESH_DELAY) {
+                            refreshScheduled = false
+                            null
+                        } else {
+                            pendingRefreshDelay.also { pendingRefreshDelay = NO_REFRESH_DELAY }
+                        }
+                    } ?: return@launch
+                    if (waitMs > 0) delay(waitMs)
+                    refresh()
+                }
+            }
         }
     }
 
@@ -471,6 +488,7 @@ class BridgeService : Service() {
         private const val NETWORK_SETTLE_MS = 3_000L
         private const val NETWORK_REDIAL_GRACE_MS = 10_000L
         private const val ART_RETRY_MS = 160_000L
+        private const val NO_REFRESH_DELAY = Long.MAX_VALUE
 
         private val _alive = MutableStateFlow(false)
 
