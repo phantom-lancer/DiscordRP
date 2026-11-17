@@ -31,6 +31,28 @@ class ActivityLinesTest {
     }
 
     @Test
+    fun `metadata comparison ignores invisible characters and compatibility spacing`() {
+        assertEquals(
+            "Correct Artist",
+            distinctMetadataText("Song Name", " S\u200Bo\u200Bng Name ", "Correct Artist"),
+        )
+    }
+
+    @Test
+    fun `album artist is used when track artist metadata is missing`() {
+        assertEquals(
+            "Album Artist",
+            resolveArtistMetadata(
+                title = "Track Name",
+                artist = null,
+                author = null,
+                albumArtist = "Album Artist",
+                displaySubtitle = "Track Name",
+            ),
+        )
+    }
+
+    @Test
     fun `default layout headlines the track and hides the player`() {
         val lines = arrange()
         assertEquals("Karry On", lines.name)
@@ -64,6 +86,21 @@ class ActivityLinesTest {
             PresenceComposer.artistForLayout(
                 title = "Karry On",
                 artist = "Morning Glory",
+                albumArtist = null,
+                showArtist = false,
+                artistAsTitle = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `artist title mode falls back to album artist`() {
+        assertEquals(
+            "Morning Glory",
+            PresenceComposer.artistForLayout(
+                title = "Karry On",
+                artist = null,
+                albumArtist = "Morning Glory",
                 showArtist = false,
                 artistAsTitle = true,
             ),
@@ -75,6 +112,7 @@ class ActivityLinesTest {
         val artist = PresenceComposer.artistForLayout(
             title = "Karry On",
             artist = "Karry On",
+            albumArtist = "Karry On",
             showArtist = false,
             artistAsTitle = true,
         )
