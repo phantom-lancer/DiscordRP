@@ -68,6 +68,7 @@ data class PresenceUiState(
     val customArtworkUrl: String = "",
     val customArtworkUploading: Boolean = false,
     val customArtworkError: String? = null,
+    val bitmapArtworkUploadEnabled: Boolean = false,
     val sampleAppLabel: String = "",
     val sampleAppPackage: String = "",
 )
@@ -143,6 +144,7 @@ class PresenceViewModel @Inject constructor(
             sampleAppPackage = samplePackage,
             customArtworkEnabled = stash.customArtworkEnabled,
             customArtworkUrl = stash.customArtworkUrl,
+            bitmapArtworkUploadEnabled = stash.bitmapArtworkUploadEnabled,
         )
     }
 
@@ -208,6 +210,12 @@ class PresenceViewModel @Inject constructor(
         if (stash.customArtworkEnabled == enabled) return
         stash.customArtworkEnabled = enabled
         nudgeBridge()
+    }
+
+    fun setBitmapArtworkUploadEnabled(enabled: Boolean) {
+        if (stash.bitmapArtworkUploadEnabled == enabled) return
+        stash.bitmapArtworkUploadEnabled = enabled
+        if (enabled) nudgeBridge()
     }
 
     fun uploadCustomArtwork(uri: Uri) {
