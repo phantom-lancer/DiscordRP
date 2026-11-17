@@ -26,7 +26,7 @@ It connects to Discord directly. No desktop companion or Google Play Services ar
 - Yandex Music, YAYAMA, Spotify, Deezer, Tidal, SoundCloud and local media players
 - Optional MusicBrainz cover lookup when the player has no usable artwork
 - Optional custom image used as the cover for every track
-- Optional hosting for bitmap-only player artwork, disabled by default and limited to unmetered networks
+- Optional hosting for bitmap-only player artwork; a configured Catbox Userhash enables Wi-Fi uploads by default, and the setting can be disabled
 - Discord status and mobile badge controls
 - Automatic reconnects and optional start on boot
 - Bundled default artwork when no cover or app icon is available
@@ -49,7 +49,7 @@ It connects to Discord directly. No desktop companion or Google Play Services ar
 
 DiscordRP prefers artwork provided by the player. HTTPS artwork is registered through Discord's external asset API and then referenced by the Rich Presence activity. This registration is required for Discord to display external artwork.
 
-Some players provide only a local bitmap. The optional **Host bitmap-only covers on Wi-Fi** setting can compress and upload those images to Catbox. It is off by default. Uploaded images have public links.
+Some players provide only a local bitmap. The **Host bitmap-only covers on Wi-Fi** setting compresses and uploads those images to Catbox. Adding a Catbox Userhash enables it by default; it can still be disabled. Uploaded images have public links.
 
 You can also choose one custom image for all tracks. Android images are uploaded only after you confirm the public upload notice. Anyone with the resulting link can view the image. If Catbox rejects anonymous uploads with HTTP 412, add your Catbox userhash in the Presence settings; it is encrypted with Android Keystore on the device.
 
