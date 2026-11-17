@@ -11,7 +11,7 @@
     <string name="access_banner_title">Нужен доступ к медиасессиям</string>
     <string name="access_banner_body">Android требует его для чтения активного плеера. DiscordRP не читает сообщения и текст уведомлений.</string>
     <string name="setup_media_access_blurb">Android требует этот системный доступ для чтения активных медиасессий. DiscordRP считывает трек, исполнителя, состояние воспроизведения и обложку, но не текст сообщений и уведомлений.</string>
-        <string name="setup_privacy_note">Данное приложение не собирает никакие пользовательские данные</string>
+        <string name="setup_privacy_note">В DiscordRP нет аналитики, приложение не читает текст уведомлений. Доступ к медиасессиям нужен только для данных о воспроизведении. При включении публикации bitmap-обложек или выборе своей картинки сжатое изображение загружается на Catbox и становится публичным. Токен Discord хранится на устройстве и используется для подключения к Discord.</string>
     <string name="setup_required_header">Обязательно</string>
     <string name="setup_optional_header">По желанию</string>
     <string name="facet_artist">Включить имя артиста</string>
