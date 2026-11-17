@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
+import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
@@ -16,6 +17,9 @@ import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import net.spacealtctrl.discordrp.BuildConfig
+import net.spacealtctrl.discordrp.R
+import net.spacealtctrl.discordrp.settings.Stash
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,6 +27,7 @@ import javax.inject.Singleton
 class ExternalArtworkHost @Inject constructor(
     @ApplicationContext private val context: Context,
     private val http: HttpClient,
+    private val stash: Stash,
 ) {
     suspend fun uploadCustomArtwork(uri: Uri): String = withContext(Dispatchers.IO) {
         val bitmap = decodeUri(uri) ?: error("Не удалось прочитать выбранное изображение")
@@ -95,24 +100,37 @@ class ExternalArtworkHost @Inject constructor(
         require(bytes.isNotEmpty() && bytes.size <= MAX_UPLOAD_BYTES) {
             "Размер изображения превышает лимит"
         }
+        val userHash = stash.catboxUserHash
         val response = http.submitFormWithBinaryData(
             url = CATBOX_API,
             formData = formData {
                 append("reqtype", "fileupload")
+                if (userHash.isNotBlank()) append("userhash", userHash)
                 append(
                     "fileToUpload",
                     bytes,
                     Headers.build {
-                        append(HttpHeaders.ContentDisposition, "filename=\"discordrp-cover.jpg\"")
+                        append(HttpHeaders.ContentDisposition, "filename=\"rp-music-cover.jpg\"")
                         append(HttpHeaders.ContentType, ContentType.Image.JPEG.toString())
                     },
                 )
             },
-        )
-        check(response.status.value in 200..299) {
-            "Хостинг изображения ответил HTTP ${response.status.value}"
+        ) {
+            header(HttpHeaders.UserAgent, "RP-Music/${BuildConfig.VERSION_NAME} (Android)")
         }
-        val result = response.bodyAsText().trim()
+        val body = response.bodyAsText().trim()
+        if (response.status.value == 412) {
+            error(
+                context.getString(
+                    if (userHash.isBlank()) R.string.catbox_http_412_anonymous
+                    else R.string.catbox_http_412_auth,
+                ),
+            )
+        }
+        check(response.status.value in 200..299) {
+            "Catbox ответил HTTP ${response.status.value}: " + body.take(160)
+        }
+        val result = body
         val uri = runCatching { java.net.URI(result) }.getOrNull()
         check(
             uri?.scheme == "https" &&

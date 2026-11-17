@@ -133,6 +133,10 @@ class Stash private constructor(
         get() = prefs.getBoolean(KEY_SHOW_APP_ICON, true)
         set(value) = write { putBoolean(KEY_SHOW_APP_ICON, value) }
 
+    var showAppName: Boolean
+        get() = prefs.getBoolean(KEY_SHOW_APP_NAME, false)
+        set(value) = write { putBoolean(KEY_SHOW_APP_NAME, value) }
+
     var showTimeline: Boolean
         get() = prefs.getBoolean(KEY_SHOW_TIMELINE, true)
         set(value) = write { putBoolean(KEY_SHOW_TIMELINE, value) }
@@ -226,6 +230,30 @@ class Stash private constructor(
     var bitmapArtworkUploadEnabled: Boolean
         get() = prefs.getBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, false)
         set(value) = write { putBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, value) }
+
+    var catboxUserHash: String
+        get() = prefs.getString(KEY_CATBOX_USER_HASH, null)
+            ?.let { TokenVault.decrypt(it, catboxAlias) }.orEmpty()
+        set(value) {
+            val clean = value.trim()
+            if (clean.isEmpty()) {
+                clearCatboxUserHash()
+            } else {
+                val sealed = TokenVault.encrypt(clean, catboxAlias)
+                write { putString(KEY_CATBOX_USER_HASH, sealed) }
+            }
+        }
+
+    val hasCatboxUserHash: Boolean
+        get() = catboxUserHash.isNotBlank()
+
+    fun clearCatboxUserHash() {
+        TokenVault.forget(catboxAlias)
+        write { remove(KEY_CATBOX_USER_HASH) }
+    }
+
+    private val catboxAlias: String
+        get() = "$tokenAlias.catbox.v1"
 
     fun dropDeezerCovers() {
         val kept = coverAssets - coverDeezerAssets
@@ -341,6 +369,7 @@ class Stash private constructor(
         private const val KEY_SHOW_ALBUM = "presence.show_album"
         private const val KEY_SHOW_GLYPH = "presence.show_playback_glyph"
         private const val KEY_SHOW_APP_ICON = "presence.show_app_icon"
+        private const val KEY_SHOW_APP_NAME = "presence.show_app_name"
         private const val KEY_SHOW_TIMELINE = "presence.show_timeline"
         private const val KEY_HIDE_PAUSED = "presence.hide_when_paused"
         private const val KEY_TITLE_SONG = "presence.song_as_title"
@@ -370,6 +399,7 @@ class Stash private constructor(
         private const val KEY_CUSTOM_ART_ENABLED = "art.custom.enabled"
         private const val KEY_CUSTOM_ART_URL = "art.custom.url"
         private const val KEY_BITMAP_ART_UPLOAD_ENABLED = "art.bitmap_upload.enabled"
+        private const val KEY_CATBOX_USER_HASH = "art.catbox.userhash.enc"
         private const val KEY_COVER_DEEZER_ALBUMS = "art.cover_deezer_albums.v1"
         private val LEGACY_ART_KEYS = listOf(
             "art.cover_assets",

@@ -4,6 +4,8 @@ on:
   push:
     branches: [ "main" ]
     paths:
+      - "app/**"
+      - "gradle/libs.versions.toml"
       - "README.md"
       - ".github/workflows/release.yml"
   workflow_dispatch:

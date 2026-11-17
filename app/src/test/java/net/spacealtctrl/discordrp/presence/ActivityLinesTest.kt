@@ -4,19 +4,28 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ActivityLinesTest {
-    private fun arrange(songAsTitle: Boolean = false, artistAsTitle: Boolean = false) =
+    private fun arrange(showAppName: Boolean = false, artistAsTitle: Boolean = false) =
         PresenceComposer.arrangeLines(
             title = "Karry On",
             artist = "Morning Glory",
             album = "War Psalms",
             appLabel = "Symfonium",
-            songAsTitle = songAsTitle,
+            showAppName = showAppName,
             artistAsTitle = artistAsTitle,
         )
 
     @Test
-    fun `default layout headlines the app`() {
+    fun `default layout headlines the track and hides the player`() {
         val lines = arrange()
+        assertEquals("Karry On", lines.name)
+        assertEquals("Morning Glory", lines.details)
+        assertEquals("War Psalms", lines.state)
+        assertEquals(null, lines.largeText)
+    }
+
+    @Test
+    fun `optional player name uses app as title`() {
+        val lines = arrange(showAppName = true)
         assertEquals("Symfonium", lines.name)
         assertEquals("Karry On", lines.details)
         assertEquals("Morning Glory", lines.state)
@@ -24,12 +33,12 @@ class ActivityLinesTest {
     }
 
     @Test
-    fun `song layout headlines the track`() {
-        val lines = arrange(songAsTitle = true)
+    fun `default track layout stays independent of player name`() {
+        val lines = arrange(showAppName = false)
         assertEquals("Karry On", lines.name)
         assertEquals("Morning Glory", lines.details)
         assertEquals("War Psalms", lines.state)
-        assertEquals("Symfonium", lines.largeText)
+        assertEquals(null, lines.largeText)
     }
 
     @Test
@@ -37,13 +46,13 @@ class ActivityLinesTest {
         val lines = arrange(artistAsTitle = true)
         assertEquals("Morning Glory", lines.name)
         assertEquals("Karry On", lines.details)
-        assertEquals("Morning Glory", lines.state)
-        assertEquals("War Psalms", lines.largeText)
+        assertEquals("War Psalms", lines.state)
+        assertEquals(null, lines.largeText)
     }
 
     @Test
     fun `artist layout wins when both are set`() {
-        val lines = arrange(songAsTitle = true, artistAsTitle = true)
+        val lines = arrange(showAppName = true, artistAsTitle = true)
         assertEquals("Morning Glory", lines.name)
     }
 
@@ -54,11 +63,11 @@ class ActivityLinesTest {
             artist = null,
             album = null,
             appLabel = "Symfonium",
-            songAsTitle = false,
+            showAppName = false,
             artistAsTitle = true,
         )
         assertEquals("Karry On", lines.name)
-        assertEquals("", lines.state)
-        assertEquals("Symfonium", lines.largeText)
+        assertEquals(null, lines.state)
+        assertEquals(null, lines.largeText)
     }
 }

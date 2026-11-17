@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.DisplayMetrics
 import dagger.hilt.android.qualifiers.ApplicationContext
+import net.spacealtctrl.discordrp.discord.DiscordApi
 import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.settings.Stash
 import java.util.concurrent.ConcurrentHashMap
@@ -15,8 +16,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.security.MessageDigest
 
 sealed interface ArtSource {
     data class Remote(val url: String, val cacheKey: String) : ArtSource
@@ -42,6 +46,7 @@ class ArtRegistry @Inject constructor(
     @ApplicationContext private val context: Context,
     private val coverLookup: CoverLookup,
     private val externalArtworkHost: ExternalArtworkHost,
+    private val discordApi: DiscordApi,
     private val stash: Stash,
     private val log: AppLog,
 ) {
@@ -49,6 +54,7 @@ class ArtRegistry @Inject constructor(
     private val unavailableStreak = ConcurrentHashMap<String, Int>()
     private val uploadCheckedAt = ConcurrentHashMap<String, Long>()
     private val coverGeneration = AtomicInteger()
+    private val assetMutex = Mutex()
     private val uploadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val pendingBitmapUploads = ConcurrentHashMap.newKeySet<String>()
     private val _artworkAvailable = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -59,7 +65,7 @@ class ArtRegistry @Inject constructor(
         is ArtSource.Remote -> register(source.url, source.cacheKey, coverGeneration.get())
         is ArtSource.Cover -> resolveCover(source)
         is ArtSource.AppIcon -> resolveAppIcon(source)
-        ArtSource.DefaultIcon -> defaultIconUrl()
+        ArtSource.DefaultIcon -> register(defaultIconUrl(), "default:icon", coverGeneration.get())
     }
 
     private suspend fun resolveCover(cover: ArtSource.Cover): String? {
@@ -75,8 +81,9 @@ class ArtRegistry @Inject constructor(
         }
 
         val cached = stash.coverAssets[cover.cacheKey]
-        if (cached != null && (cached.startsWith("mp:") || ArtworkUrls.normalize(cached) != null)) {
-            return cached
+        if (cached?.startsWith("mp:") == true) return cached
+        if (ArtworkUrls.normalize(cached) != null) {
+            store(cached!!, cover.cacheKey, generation)?.let { return it }
         }
 
         val bitmap = cover.artwork
@@ -127,8 +134,9 @@ class ArtRegistry @Inject constructor(
                 val bitmap = cover.artwork ?: return@launch
                 val uploaded = externalArtworkHost.uploadBitmapOnUnmeteredNetwork(bitmap) ?: return@launch
                 if (isStale(generation)) return@launch
+                val registered = store(uploaded, cover.cacheKey, generation) ?: return@launch
 
-                stash.coverAssets = stash.coverAssets + (cover.cacheKey to uploaded)
+                stash.coverAssets = stash.coverAssets + (cover.cacheKey to registered)
                 forgetMiss(cover.cacheKey)
                 unavailableStreak.remove(cover.cacheKey)
                 _artworkAvailable.tryEmit(Unit)
@@ -244,24 +252,62 @@ class ArtRegistry @Inject constructor(
     }
 
     private suspend fun resolveAppIcon(icon: ArtSource.AppIcon): String? {
-        val name = HostedIcons.nameFor(icon.packageName) ?: return defaultIconUrl()
-        return ICON_BASE + "/" + name + ".png?v=" + ICON_REVISION
+        val name = HostedIcons.nameFor(icon.packageName) ?: return register(
+            defaultIconUrl(),
+            "default:icon",
+            coverGeneration.get(),
+        )
+        return register(
+            ICON_BASE + "/" + name + ".png?v=" + ICON_REVISION,
+            "app-icon:" + icon.packageName,
+            coverGeneration.get(),
+        )
     }
 
     private fun defaultIconUrl(): String = ICON_BASE + "/discordrp.png?v=" + ICON_REVISION
 
-    private suspend fun register(url: String, cacheKey: String, generation: Int): String? {
-        stash.coverAssets[cacheKey]?.let { return it }
-        return store(url, cacheKey, generation)
-    }
+    private suspend fun register(url: String, cacheKey: String, generation: Int): String? =
+        store(url, cacheKey, generation)
 
     private suspend fun store(url: String, cacheKey: String, generation: Int): String? {
         val direct = ArtworkUrls.normalize(url) ?: return null
         if (isStale(generation)) return null
-        stash.coverAssets = stash.coverAssets + (cacheKey to direct)
-        unavailableStreak.remove(cacheKey)
-        return direct
+
+        val urlKey = "asset:url:" + sha256(direct)
+        stash.coverAssets[urlKey]?.takeIf { it.startsWith("mp:") }?.let { cached ->
+            stash.coverAssets = stash.coverAssets + (cacheKey to cached)
+            return cached
+        }
+
+        return assetMutex.withLock {
+            if (isStale(generation)) return@withLock null
+            stash.coverAssets[urlKey]?.takeIf { it.startsWith("mp:") }?.let { cached ->
+                stash.coverAssets = stash.coverAssets + (cacheKey to cached)
+                return@withLock cached
+            }
+
+            val registered = discordApi.hostedAssetFor(direct).getOrElse { error ->
+                log.warn(TAG, "Discord external artwork registration failed: " + error.javaClass.simpleName)
+                return@withLock null
+            }
+            if (!registered.startsWith("mp:") || registered.removePrefix("mp:").isBlank()) {
+                log.warn(TAG, "Discord returned an invalid external artwork reference")
+                return@withLock null
+            }
+            if (isStale(generation)) return@withLock null
+
+            stash.coverAssets = stash.coverAssets +
+                (urlKey to registered) +
+                (cacheKey to registered)
+            unavailableStreak.remove(cacheKey)
+            registered
+        }
     }
+
+    private fun sha256(value: String): String =
+        MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray(Charsets.UTF_8))
+            .joinToString("") { byte -> "%02x".format(byte) }
 
     fun iconBitmap(packageName: String): Bitmap? = runCatching {
         val pm = context.packageManager

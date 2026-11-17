@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">DiscordRP</string>
-    <string name="app_name_short">DiscordRP</string>
+    <string name="app_name">RP Music</string>
+    <string name="app_name_short">RP Music</string>
 
     <string name="tab_home">Home</string>
     <string name="tab_presence">Presence</string>
@@ -59,6 +59,7 @@
     <string name="facet_hide_paused">Hide while paused</string>
     <string name="facet_song_as_title">Song as title</string>
     <string name="facet_artist_as_title">Artist as title</string>
+    <string name="facet_app_name">Show player name</string>
     <string name="presence_players_header">Your players</string>
     <string name="presence_players_search">Search…</string>
 
@@ -97,14 +98,14 @@
     <string name="you_sign_out_blurb">Clears everything the app stored on this device.</string>
     <string name="you_app_header">App</string>
     <string name="you_check_updates">Check for updates</string>
-    <string name="you_footer_version">DiscordRP v%1$s</string>
+    <string name="you_footer_version">RP Music v%1$s</string>
     <string name="update_action">Update to %1$s</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_dialog_title">Updates</string>
-    <string name="update_dialog_current">DiscordRP is up to date.</string>
+    <string name="update_dialog_current">RP Music is up to date.</string>
     <string name="update_dialog_failed">Could not fetch the update. Try again later.</string>
     <string name="update_banner_title">Update available</string>
-    <string name="update_banner_body">DiscordRP %1$s is ready to download and install.</string>
+    <string name="update_banner_body">RP Music %1$s is ready to download and install.</string>
     <string name="update_banner_action">Update</string>
     <string name="you_sign_out_confirm_title">Sign out?</string>
     <string name="you_sign_out_confirm_body">Your login and settings on this device will be cleared.</string>
@@ -156,7 +157,7 @@
     <string name="bridge_action_exit">Exit</string>
     <string name="bridge_sign_in_again">Discord rejected your login. Open the app and sign in again.</string>
 
-    <string name="tile_label" translatable="false">DiscordRP</string>
+    <string name="tile_label" translatable="false">RP Music</string>
     <string name="tile_started_toast">Connected</string>
     <string name="tile_stopped_toast">Disconnected</string>
     <string name="tile_on_subtitle">On</string>
@@ -191,6 +192,15 @@
     <string name="custom_cover_upload_notice_title">Upload a public image?</string>
     <string name="custom_cover_upload_notice_body">Discord cannot use an image stored only on your phone. DiscordRP will compress it and upload it once to Catbox, which returns a public link. Anyone with that link can view the image. Anonymous uploads cannot be removed from this app; Catbox removes them after two years without views. Player artwork itself is not uploaded over mobile data.</string>
     <string name="custom_cover_upload_confirm">Upload and use</string>
+    <string name="catbox_userhash_header">Catbox upload access</string>
+    <string name="catbox_userhash_blurb">If Catbox rejects anonymous uploads with HTTP 412, create an account at catbox.moe and add its Userhash here. It is encrypted on this device with Android Keystore.</string>
+    <string name="catbox_userhash_label">Catbox Userhash</string>
+    <string name="catbox_userhash_placeholder">Paste your Userhash</string>
+    <string name="catbox_userhash_save">Save</string>
+    <string name="catbox_userhash_saved">Userhash is stored securely on this device.</string>
+    <string name="catbox_userhash_clear">Remove Userhash</string>
+    <string name="catbox_http_412_anonymous">Catbox rejected the anonymous upload (HTTP 412). Add your Catbox Userhash in the Presence settings, then try again.</string>
+    <string name="catbox_http_412_auth">Catbox rejected this Userhash (HTTP 412). Check the value or try another network.</string>
     <string name="cover_source_musicbrainz">MusicBrainz</string>
     <string name="cover_source_musicbrainz_blurb">Player artwork first. If unavailable, use MusicBrainz and the Cover Art Archive.</string>
     <string name="cover_source_musicbrainz_deezer">MusicBrainz (+ Deezer backup)</string>

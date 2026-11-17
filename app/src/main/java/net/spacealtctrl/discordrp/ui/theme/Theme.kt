@@ -4,15 +4,18 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.view.Window
+import android.os.Build
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import net.spacealtctrl.discordrp.settings.Mood
@@ -39,7 +42,14 @@ fun animatedMoodColor(mood: Mood): Color = animateColorAsState(
 
 @Composable
 fun DiscordRpTheme(content: @Composable () -> Unit) {
-    val palette = remember { Palette() }
+    val context = LocalContext.current
+    val palette = remember(context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Palette.from(dynamicDarkColorScheme(context))
+        } else {
+            Palette()
+        }
+    }
     val gaps = remember { Gaps() }
     val corners = remember { Corners() }
 

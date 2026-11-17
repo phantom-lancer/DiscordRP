@@ -34,7 +34,7 @@ class PresenceComposer @Inject constructor(
             artist = track.artist.takeIf { stash.showArtist },
             album = track.album.takeIf { stash.showAlbum },
             appLabel = track.appLabel,
-            songAsTitle = stash.songAsTitle,
+            showAppName = stash.showAppName,
             artistAsTitle = stash.artistAsTitle,
         )
 
@@ -44,7 +44,7 @@ class PresenceComposer @Inject constructor(
                 largeImage = large,
                 smallImage = art.small,
                 largeText = ActivityCard.clip(lines.largeText),
-                smallText = ActivityCard.clip(track.appLabel),
+                smallText = ActivityCard.clip(track.appLabel.takeIf { stash.showAppName }),
             )
         }
 
@@ -131,7 +131,7 @@ class PresenceComposer @Inject constructor(
             artist = track.artist.takeIf { stash.showArtist },
             album = track.album.takeIf { stash.showAlbum },
             appLabel = track.appLabel,
-            songAsTitle = stash.songAsTitle,
+            showAppName = stash.showAppName,
             artistAsTitle = stash.artistAsTitle,
         ).name
 
@@ -143,26 +143,26 @@ class PresenceComposer @Inject constructor(
             artist: String?,
             album: String?,
             appLabel: String,
-            songAsTitle: Boolean,
+            showAppName: Boolean,
             artistAsTitle: Boolean,
         ): ActivityLines = when {
             artistAsTitle -> ActivityLines(
                 name = artist?.takeIf { it.isNotBlank() } ?: title,
                 details = title,
-                state = artist.orEmpty(),
-                largeText = album ?: appLabel,
-            )
-            songAsTitle -> ActivityLines(
-                name = title,
-                details = artist,
                 state = album,
-                largeText = appLabel,
+                largeText = appLabel.takeIf { showAppName },
             )
-            else -> ActivityLines(
+            showAppName -> ActivityLines(
                 name = appLabel,
                 details = title,
                 state = artist,
                 largeText = album,
+            )
+            else -> ActivityLines(
+                name = title,
+                details = artist,
+                state = album,
+                largeText = null,
             )
         }
     }
