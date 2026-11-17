@@ -26,7 +26,11 @@ class ExternalArtworkHost @Inject constructor(
 ) {
     suspend fun uploadCustomArtwork(uri: Uri): String = withContext(Dispatchers.IO) {
         val bitmap = decodeUri(uri) ?: error("Не удалось прочитать выбранное изображение")
-        uploadJpeg(compress(bitmap))
+        try {
+            uploadJpeg(compress(bitmap))
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     suspend fun uploadBitmapOnUnmeteredNetwork(bitmap: Bitmap): String? {
@@ -59,27 +63,31 @@ class ExternalArtworkHost @Inject constructor(
     }
 
     private fun compress(source: Bitmap): ByteArray {
-        val largest = maxOf(source.width, source.height).coerceAtLeast(1)
-        val scale = minOf(1f, MAX_SIDE.toFloat() / largest)
-        val bitmap = if (scale < 1f) {
-            Bitmap.createScaledBitmap(
-                source,
-                (source.width * scale).toInt().coerceAtLeast(1),
-                (source.height * scale).toInt().coerceAtLeast(1),
-                true,
-            )
-        } else {
-            source
-        }
-
-        val output = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, output)
-        return output.toByteArray().also {
-            if (bitmap !== source) bitmap.recycle()
-            require(it.isNotEmpty() && it.size <= MAX_UPLOAD_BYTES) {
-                "Изображение не удалось сжать до допустимого размера"
+        val sourceMax = maxOf(source.width, source.height).coerceAtLeast(1)
+        for (side in intArrayOf(MAX_SIDE, 512, 384)) {
+            val scale = minOf(1f, side.toFloat() / sourceMax)
+            val bitmap = if (scale < 1f) {
+                Bitmap.createScaledBitmap(
+                    source,
+                    (source.width * scale).toInt().coerceAtLeast(1),
+                    (source.height * scale).toInt().coerceAtLeast(1),
+                    true,
+                )
+            } else {
+                source
+            }
+            try {
+                for (quality in intArrayOf(JPEG_QUALITY, 72, 62)) {
+                    val output = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
+                    val bytes = output.toByteArray()
+                    if (bytes.isNotEmpty() && bytes.size <= MAX_UPLOAD_BYTES) return bytes
+                }
+            } finally {
+                if (bitmap !== source) bitmap.recycle()
             }
         }
+        error("Изображение не удалось сжать до допустимого размера")
     }
 
     private suspend fun uploadJpeg(bytes: ByteArray): String {
