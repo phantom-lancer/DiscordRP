@@ -126,7 +126,7 @@
     <string name="setup_sign_in_blurb">Your login stays on this device.</string>
     <string name="setup_battery_title">Unrestricted battery</string>
     <string name="setup_battery_blurb">Keeps the connection alive while the screen is off.</string>
-    <string name="setup_privacy_note">This app collects no data. Your login never leaves your phone.</string>
+    <string name="setup_privacy_note">DiscordRP has no analytics and does not read notification text. Media-session access is used for playback only. If you enable bitmap hosting or choose a custom cover, the compressed image is uploaded to Catbox and becomes public. Your Discord login is stored on this device and used to connect to Discord.</string>
     <string name="setup_finish_cta">Done</string>
 
     <string name="login_cta">Sign in with Discord</string>
