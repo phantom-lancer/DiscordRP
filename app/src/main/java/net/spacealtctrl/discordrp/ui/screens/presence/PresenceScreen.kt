@@ -126,6 +126,14 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
                         onPick = viewModel::pickCoverSource,
                         icon = Icons.Rounded.Image,
                     )
+                    RowRule()
+                    ToggleRow(
+                        title = stringResource(R.string.presence_bitmap_upload_toggle),
+                        subtitle = stringResource(R.string.presence_bitmap_upload_blurb),
+                        icon = Icons.Rounded.Image,
+                        checked = state.bitmapArtworkUploadEnabled,
+                        onToggle = { viewModel.setBitmapArtworkUploadEnabled(!state.bitmapArtworkUploadEnabled) },
+                    )
                 }
             }
 
