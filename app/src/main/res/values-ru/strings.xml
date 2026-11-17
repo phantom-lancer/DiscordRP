@@ -167,7 +167,7 @@
     <string name="cover_source_player">Только обложка плеера</string>
     <string name="cover_source_player_blurb">Использовать изображение, которое передаёт музыкальный плеер. Для плееров, отдающих только локальную картинку, ниже есть отдельная настройка публичной загрузки.</string>
     <string name="presence_bitmap_upload_toggle">Публиковать локальные обложки по Wi-Fi</string>
-    <string name="presence_bitmap_upload_blurb">Для плееров, которые передают картинку с устройства, а не ссылку. RP Music сжимает её и один раз на трек загружает на Catbox. Ссылка публичная. Через мобильную сеть загрузка не выполняется. По умолчанию выключено.</string>
+    <string name="presence_bitmap_upload_blurb">Для плееров, которые передают локальную картинку вместо ссылки. RP Music сжимает её и загружает один раз на трек по Wi-Fi. Ссылка публичная. После добавления Catbox Userhash эта функция включается автоматически. Выключи её, чтобы не публиковать локальные обложки.</string>
     <string name="custom_cover_header">Своя обложка для всех треков</string>
     <string name="custom_cover_enable">Использовать свою обложку</string>
     <string name="custom_cover_selected">Твоя картинка будет заменять обложки всех плееров.</string>
@@ -178,7 +178,7 @@
     <string name="custom_cover_ready">Сохранено. Эта картинка используется для всех треков.</string>
     <string name="custom_cover_hint">Выбери одну картинку вместо обложек альбомов.</string>
     <string name="custom_cover_upload_notice_title">Загрузить изображение в открытый доступ?</string>
-    <string name="custom_cover_upload_notice_body">Discord не может использовать изображение, хранящееся только на телефоне. RP Music сожмёт его и загрузит на Catbox, который вернёт публичную ссылку. Любой, у кого есть ссылка, сможет открыть картинку. Анонимные загрузки нельзя удалить из приложения. Catbox удаляет файлы после двух лет без просмотров. Обложки плееров не загружаются через мобильную сеть.</string>
+    <string name="custom_cover_upload_notice_body">Discord не может использовать изображение, которое хранится только на телефоне. RP Music сожмёт его и загрузит на Catbox. Любой, у кого есть ссылка, сможет открыть картинку. Загрузки с Catbox Userhash хранятся в аккаунте; анонимные файлы удаляются после двух лет без просмотров. Обложки плееров загружаются только по Wi-Fi.</string>
     <string name="custom_cover_upload_confirm">Загрузить и использовать</string>
     <string name="catbox_userhash_header">Доступ к загрузке Catbox</string>
     <string name="catbox_userhash_blurb">Если Catbox отклоняет анонимную загрузку с HTTP 412, создай аккаунт на catbox.moe и укажи здесь свой Userhash. Он хранится на устройстве в зашифрованном виде через Android Keystore.</string>
@@ -189,6 +189,8 @@
     <string name="catbox_userhash_clear">Удалить Userhash</string>
     <string name="catbox_http_412_anonymous">Catbox отклонил анонимную загрузку (HTTP 412). Добавь Userhash своего аккаунта Catbox в настройках активности и повтори загрузку.</string>
     <string name="catbox_http_412_auth">Catbox отклонил этот Userhash (HTTP 412). Проверь значение или попробуй другую сеть.</string>
+    <string name="catbox_http_412_detail">Catbox отклонил загрузку (HTTP 412). Ответ сервера: %1$s. Идентификатор запроса: %2$s</string>
+    <string name="catbox_empty_error_body">Catbox не объяснил причину отказа.</string>
     <string name="cover_source_musicbrainz">MusicBrainz</string>
     <string name="cover_source_musicbrainz_blurb">Сначала используется обложка плеера. Если её нет, приложение ищет изображение в MusicBrainz и Cover Art Archive.</string>
     <string name="cover_source_musicbrainz_deezer">MusicBrainz (+ резервный Deezer)</string>

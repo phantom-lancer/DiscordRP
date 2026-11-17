@@ -141,7 +141,11 @@ class ArtRegistry @Inject constructor(
                 unavailableStreak.remove(cover.cacheKey)
                 _artworkAvailable.tryEmit(Unit)
             } catch (error: Exception) {
-                log.warn(TAG, "Could not upload bitmap artwork: " + error.javaClass.simpleName)
+                log.warn(
+                    TAG,
+                    "Could not upload bitmap artwork: " +
+                        (error.message ?: error.javaClass.simpleName).take(240),
+                )
             } finally {
                 pendingBitmapUploads.remove(cover.cacheKey)
             }
@@ -164,6 +168,12 @@ class ArtRegistry @Inject constructor(
         unavailableStreak.clear()
         stash.coverDeezerMisses = emptyMap()
         if (!stash.coverSource.usesMusicBrainzFallback) stash.dropDeezerCovers()
+    }
+
+    fun artworkHostingChanged() {
+        unavailableAt.clear()
+        unavailableStreak.clear()
+        uploadCheckedAt.clear()
     }
 
     private fun unavailableIsFresh(cacheKey: String, now: Long = System.currentTimeMillis()): Boolean {
@@ -331,7 +341,7 @@ class ArtRegistry @Inject constructor(
 
         const val ICON_BASE =
             "https://raw.githubusercontent.com/phantom-lancer/DiscordRP/main/assets/icons"
-        const val ICON_REVISION = 3
+        const val ICON_REVISION = 4
 
         const val MISS_RETRY_MS = 5 * 60 * 1000L
         const val UNAVAILABLE_RETRY_MS = 2 * 60 * 1000L

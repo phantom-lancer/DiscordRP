@@ -9,7 +9,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
-import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
@@ -17,7 +16,6 @@ import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
-import net.spacealtctrl.discordrp.BuildConfig
 import net.spacealtctrl.discordrp.R
 import net.spacealtctrl.discordrp.settings.Stash
 import javax.inject.Inject
@@ -110,25 +108,25 @@ class ExternalArtworkHost @Inject constructor(
                     "fileToUpload",
                     bytes,
                     Headers.build {
-                        append(HttpHeaders.ContentDisposition, "filename=\"rp-music-cover.jpg\"")
+                        append(
+                            HttpHeaders.ContentDisposition,
+                            "form-data; name=\"fileToUpload\"; filename=\"rp-music-cover.jpg\"",
+                        )
                         append(HttpHeaders.ContentType, ContentType.Image.JPEG.toString())
                     },
                 )
             },
-        ) {
-            header(HttpHeaders.UserAgent, "RP-Music/${BuildConfig.VERSION_NAME} (Android)")
-        }
+        )
         val body = response.bodyAsText().trim()
         if (response.status.value == 412) {
-            error(
-                context.getString(
-                    if (userHash.isBlank()) R.string.catbox_http_412_anonymous
-                    else R.string.catbox_http_412_auth,
-                ),
-            )
+            val details = body.replace(Regex("\\s+"), " ").take(220)
+                .ifBlank { context.getString(R.string.catbox_empty_error_body) }
+            val trace = response.headers["cf-ray"].orEmpty()
+            error(context.getString(R.string.catbox_http_412_detail, details, trace))
         }
         check(response.status.value in 200..299) {
-            "Catbox ответил HTTP ${response.status.value}: " + body.take(160)
+            "Catbox ответил HTTP ${response.status.value}: " +
+                body.replace(Regex("\\s+"), " ").take(200)
         }
         val result = body
         val uri = runCatching { java.net.URI(result) }.getOrNull()

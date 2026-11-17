@@ -179,7 +179,7 @@
     <string name="cover_source_player">Player artwork only</string>
     <string name="cover_source_player_blurb">Use the image supplied by the player. Bitmap-only artwork needs optional public hosting below; no automatic artwork upload uses mobile data.</string>
     <string name="presence_bitmap_upload_toggle">Host bitmap-only covers on Wi-Fi</string>
-    <string name="presence_bitmap_upload_blurb">Only for players that expose a local image instead of a URL. DiscordRP compresses and uploads it to Catbox once per track; the image link is public. Never uploads over mobile data. Off by default.</string>
+    <string name="presence_bitmap_upload_blurb">For players that expose a local image instead of a URL. RP Music compresses and uploads it once per track over Wi-Fi; the link is public. Adding a Catbox Userhash enables this by default. Turn it off to keep local covers private.</string>
     <string name="custom_cover_header">Cover for every track</string>
     <string name="custom_cover_enable">Use my own cover</string>
     <string name="custom_cover_selected">Your image replaces the artwork from every player.</string>
@@ -190,7 +190,7 @@
     <string name="custom_cover_ready">Saved. This image is used for every track.</string>
     <string name="custom_cover_hint">Choose one image to show instead of all album covers.</string>
     <string name="custom_cover_upload_notice_title">Upload a public image?</string>
-    <string name="custom_cover_upload_notice_body">Discord cannot use an image stored only on your phone. DiscordRP will compress it and upload it once to Catbox, which returns a public link. Anyone with that link can view the image. Anonymous uploads cannot be removed from this app; Catbox removes them after two years without views. Player artwork itself is not uploaded over mobile data.</string>
+    <string name="custom_cover_upload_notice_body">Discord cannot use an image stored only on your phone. RP Music compresses it and uploads it to Catbox. Anyone with the public link can view it. Uploads associated with your Catbox account are kept with that account; anonymous uploads are removed after two years without views. Player artwork uploads use Wi-Fi only.</string>
     <string name="custom_cover_upload_confirm">Upload and use</string>
     <string name="catbox_userhash_header">Catbox upload access</string>
     <string name="catbox_userhash_blurb">If Catbox rejects anonymous uploads with HTTP 412, create an account at catbox.moe and add its Userhash here. It is encrypted on this device with Android Keystore.</string>
@@ -201,6 +201,8 @@
     <string name="catbox_userhash_clear">Remove Userhash</string>
     <string name="catbox_http_412_anonymous">Catbox rejected the anonymous upload (HTTP 412). Add your Catbox Userhash in the Presence settings, then try again.</string>
     <string name="catbox_http_412_auth">Catbox rejected this Userhash (HTTP 412). Check the value or try another network.</string>
+    <string name="catbox_http_412_detail">Catbox refused the upload (HTTP 412). Server response: %1$s. Request trace: %2$s</string>
+    <string name="catbox_empty_error_body">Catbox did not explain why it refused the request.</string>
     <string name="cover_source_musicbrainz">MusicBrainz</string>
     <string name="cover_source_musicbrainz_blurb">Player artwork first. If unavailable, use MusicBrainz and the Cover Art Archive.</string>
     <string name="cover_source_musicbrainz_deezer">MusicBrainz (+ Deezer backup)</string>
