@@ -141,7 +141,11 @@ class ArtRegistry @Inject constructor(
                 unavailableStreak.remove(cover.cacheKey)
                 _artworkAvailable.tryEmit(Unit)
             } catch (error: Exception) {
-                log.warn(TAG, "Could not upload bitmap artwork: " + error.javaClass.simpleName)
+                log.warn(
+                    TAG,
+                    "Could not upload bitmap artwork: " +
+                        (error.message ?: error.javaClass.simpleName).take(240),
+                )
             } finally {
                 pendingBitmapUploads.remove(cover.cacheKey)
             }
@@ -164,6 +168,12 @@ class ArtRegistry @Inject constructor(
         unavailableStreak.clear()
         stash.coverDeezerMisses = emptyMap()
         if (!stash.coverSource.usesMusicBrainzFallback) stash.dropDeezerCovers()
+    }
+
+    fun artworkHostingChanged() {
+        unavailableAt.clear()
+        unavailableStreak.clear()
+        uploadCheckedAt.clear()
     }
 
     private fun unavailableIsFresh(cacheKey: String, now: Long = System.currentTimeMillis()): Boolean {
