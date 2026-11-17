@@ -29,7 +29,7 @@
     <string name="tile_on_subtitle">Включено</string>
     <string name="cover_source_musicbrainz_blurb">Сначала обложка из плеера. Если её нет, используется MusicBrainz и Cover Art Archive.</string>
     <string name="cover_source_player">Только обложка плеера</string>
-    <string name="cover_source_player_blurb">Берёт картинку напрямую из музыкального приложения. Без поиска по сторонним каталогам и лишних запросов.</string>
+    <string name="cover_source_player_blurb">Берёт картинку напрямую из музыкального приложения. Если плеер отдаёт только bitmap, он отправляется один раз по Wi‑Fi. По мобильной сети автоматической загрузки обложек нет.</string>
     <string name="custom_cover_header">Обложка для всех треков</string>
     <string name="custom_cover_enable">Использовать свою обложку</string>
     <string name="custom_cover_selected">Твоя картинка заменит обложки во всех плеерах.</string>
