@@ -8,7 +8,9 @@
     <string name="bridge_action_exit">Выйти</string>
     <string name="you_sign_out">Выйти из аккаунта</string>
     <string name="setup_media_access_title">Доступ к медиасессиям</string>
-    <string name="setup_media_access_blurb">Разрешает DiscordRP читать состояние плеера и получать обложки альбомов.</string>
+    <string name="access_banner_title">Нужен доступ к медиасессиям</string>
+    <string name="access_banner_body">Android требует его для чтения активного плеера. DiscordRP не читает сообщения и текст уведомлений.</string>
+    <string name="setup_media_access_blurb">Android требует этот системный доступ для чтения активных медиасессий. DiscordRP считывает трек, исполнителя, состояние воспроизведения и обложку, но не текст сообщений и уведомлений.</string>
         <string name="setup_privacy_note">Данное приложение не собирает никакие пользовательские данные</string>
     <string name="setup_required_header">Обязательно</string>
     <string name="setup_optional_header">По желанию</string>
@@ -26,5 +28,19 @@
     <string name="tile_off_subtitle">Отключено</string>
     <string name="tile_on_subtitle">Включено</string>
     <string name="cover_source_musicbrainz_blurb">Сначала обложка из плеера. Если её нет, используется MusicBrainz и Cover Art Archive.</string>
+    <string name="cover_source_player">Только обложка плеера</string>
+    <string name="cover_source_player_blurb">Берёт картинку напрямую из музыкального приложения. Без поиска по сторонним каталогам и лишних запросов.</string>
+    <string name="custom_cover_header">Обложка для всех треков</string>
+    <string name="custom_cover_enable">Использовать свою обложку</string>
+    <string name="custom_cover_selected">Твоя картинка заменит обложки во всех плеерах.</string>
+    <string name="custom_cover_choose_first">Сначала выбери изображение.</string>
+    <string name="custom_cover_choose">Выбрать изображение</string>
+    <string name="custom_cover_replace">Выбрать другое изображение</string>
+    <string name="custom_cover_uploading">Сжимаем и загружаем один раз…</string>
+    <string name="custom_cover_ready">Сохранено. Картинка используется для всех треков.</string>
+    <string name="custom_cover_hint">Выбери одну картинку вместо всех обложек альбомов.</string>
+    <string name="custom_cover_upload_notice_title">Загрузить публичную картинку?</string>
+    <string name="custom_cover_upload_notice_body">Discord не может использовать изображение, которое хранится только на телефоне. DiscordRP сожмёт его и один раз загрузит на Catbox, который вернёт публичную ссылку. Любой, у кого есть ссылка, сможет открыть картинку. Анонимную загрузку нельзя удалить из этого приложения; Catbox удаляет её после двух лет без просмотров. Обложки из плееров не отправляются по мобильной сети.</string>
+    <string name="custom_cover_upload_confirm">Загрузить и использовать</string>
     <string name="cover_source_musicbrainz_deezer_blurb">Сначала обложка плеера, затем MusicBrainz. Deezer используется, если обеих обложек нет.</string>
 </resources>
