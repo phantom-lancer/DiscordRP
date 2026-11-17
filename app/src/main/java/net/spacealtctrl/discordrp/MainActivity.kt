@@ -23,13 +23,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         notificationAccess.value = hasNotificationAccess()
-        updateHub.autoCheck()
-
         setContent {
             DiscordRpTheme {
                 AppNavHost(notificationAccess = notificationAccess)
             }
         }
+        window.decorView.post { updateHub.autoCheck() }
     }
 
     override fun onResume() {
