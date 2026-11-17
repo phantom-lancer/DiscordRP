@@ -58,6 +58,39 @@ class ActivityLinesTest {
     }
 
     @Test
+    fun `artist title mode keeps artist visible when artist facet is off`() {
+        assertEquals(
+            "Morning Glory",
+            PresenceComposer.artistForLayout(
+                title = "Karry On",
+                artist = "Morning Glory",
+                showArtist = false,
+                artistAsTitle = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `artist title mode rejects track title as artist`() {
+        val artist = PresenceComposer.artistForLayout(
+            title = "Karry On",
+            artist = "Karry On",
+            showArtist = false,
+            artistAsTitle = true,
+        )
+        val lines = PresenceComposer.arrangeLines(
+            title = "Karry On",
+            artist = artist,
+            album = null,
+            appLabel = "Symfonium",
+            showAppName = false,
+            artistAsTitle = true,
+        )
+        assertEquals("Karry On", lines.name)
+        assertEquals(null, lines.details)
+    }
+
+    @Test
     fun `artist layout headlines the artist`() {
         val lines = arrange(artistAsTitle = true)
         assertEquals("Morning Glory", lines.name)
@@ -83,6 +116,7 @@ class ActivityLinesTest {
             artistAsTitle = true,
         )
         assertEquals("Karry On", lines.name)
+        assertEquals(null, lines.details)
         assertEquals(null, lines.state)
         assertEquals(null, lines.largeText)
     }

@@ -1,13 +1,10 @@
 name: Release
 
 on:
-  push:
+  workflow_run:
+    workflows: [ "Build" ]
+    types: [ completed ]
     branches: [ "main" ]
-    paths:
-      - "app/**"
-      - "gradle/libs.versions.toml"
-      - "README.md"
-      - ".github/workflows/release.yml"
   workflow_dispatch:
     inputs:
       force_release:
@@ -48,7 +45,7 @@ jobs:
   release:
     name: Build and publish signed APK
     needs: signing-check
-    if: needs.signing-check.outputs.configured == 'true'
+    if: ${{ needs.signing-check.outputs.configured == 'true' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

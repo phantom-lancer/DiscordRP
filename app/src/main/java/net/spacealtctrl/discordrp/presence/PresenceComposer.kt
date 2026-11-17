@@ -31,7 +31,12 @@ class PresenceComposer @Inject constructor(
     suspend fun compose(track: NowPlaying): ComposedPresence {
         val lines = arrangeLines(
             title = track.title,
-            artist = track.artist.takeIf { stash.showArtist },
+            artist = artistForLayout(
+                title = track.title,
+                artist = track.artist,
+                showArtist = stash.showArtist,
+                artistAsTitle = stash.artistAsTitle,
+            ),
             album = track.album.takeIf { stash.showAlbum },
             appLabel = track.appLabel,
             showAppName = stash.showAppName,
@@ -128,7 +133,12 @@ class PresenceComposer @Inject constructor(
 
         fun cardName(track: NowPlaying, stash: Stash): String = arrangeLines(
             title = track.title,
-            artist = track.artist.takeIf { stash.showArtist },
+            artist = artistForLayout(
+                title = track.title,
+                artist = track.artist,
+                showArtist = stash.showArtist,
+                artistAsTitle = stash.artistAsTitle,
+            ),
             album = track.album.takeIf { stash.showAlbum },
             appLabel = track.appLabel,
             showAppName = stash.showAppName,
@@ -138,6 +148,17 @@ class PresenceComposer @Inject constructor(
         const val GLYPH_BASE =
             "https://raw.githubusercontent.com/phantom-lancer/DiscordRP/main/assets/glyphs"
 
+        internal fun artistForLayout(
+            title: String,
+            artist: String?,
+            showArtist: Boolean,
+            artistAsTitle: Boolean,
+        ): String? = if (showArtist || artistAsTitle) {
+            distinctMetadataText(title, artist)
+        } else {
+            null
+        }
+
         fun arrangeLines(
             title: String,
             artist: String?,
@@ -146,12 +167,17 @@ class PresenceComposer @Inject constructor(
             showAppName: Boolean,
             artistAsTitle: Boolean,
         ): ActivityLines = when {
-            artistAsTitle -> ActivityLines(
-                name = artist?.takeIf { it.isNotBlank() } ?: title,
-                details = title,
-                state = album,
-                largeText = appLabel.takeIf { showAppName },
-            )
+            artistAsTitle -> {
+                val visibleArtist = artist?.trim()?.takeIf {
+                    it.isNotEmpty() && !it.equals(title.trim(), ignoreCase = true)
+                }
+                ActivityLines(
+                    name = visibleArtist ?: title,
+                    details = title.takeIf { visibleArtist != null },
+                    state = album,
+                    largeText = appLabel.takeIf { showAppName },
+                )
+            }
             showAppName -> ActivityLines(
                 name = appLabel,
                 details = title,

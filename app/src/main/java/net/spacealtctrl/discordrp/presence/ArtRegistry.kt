@@ -341,7 +341,7 @@ class ArtRegistry @Inject constructor(
 
         const val ICON_BASE =
             "https://raw.githubusercontent.com/phantom-lancer/DiscordRP/main/assets/icons"
-        const val ICON_REVISION = 4
+        const val ICON_REVISION = 5
 
         const val MISS_RETRY_MS = 5 * 60 * 1000L
         const val UNAVAILABLE_RETRY_MS = 2 * 60 * 1000L
