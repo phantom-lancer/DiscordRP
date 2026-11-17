@@ -1,13 +1,15 @@
 package net.spacealtctrl.discordrp.settings
 
 enum class CoverSource(val stored: String) {
-    MUSICBRAINZ("musicbrainz"),
-    MUSICBRAINZ_DEEZER("musicbrainz_deezer");
+    PLAYER("player"),
+    MUSICBRAINZ("musicbrainz");
 
-    val deezerBackup: Boolean get() = this == MUSICBRAINZ_DEEZER
+    val usesMusicBrainzFallback: Boolean get() = this == MUSICBRAINZ
 
     companion object {
-        fun fromStored(value: String?): CoverSource =
-            entries.firstOrNull { it.stored == value } ?: MUSICBRAINZ
+        fun fromStored(value: String?): CoverSource = when (value) {
+            "musicbrainz", "musicbrainz_deezer" -> MUSICBRAINZ
+            else -> PLAYER
+        }
     }
 }
