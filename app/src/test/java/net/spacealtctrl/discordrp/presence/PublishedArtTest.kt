@@ -22,11 +22,12 @@ class PublishedArtTest {
     }
 
     @Test
-    fun `anything else has no proxy link`() {
+    fun `direct public image urls are preserved for Rich Presence`() {
         assertNull(DiscordMedia.url(null))
         assertNull(DiscordMedia.url("mp:"))
         assertNull(DiscordMedia.url("1446527242577641472"))
-        assertNull(DiscordMedia.url("https://evil.test/a.png"))
+        assertEquals("https://evil.test/a.png", DiscordMedia.url("https://evil.test/a.png"))
+        assertNull(DiscordMedia.url("http://evil.test/a.png"))
     }
 
     @Test
