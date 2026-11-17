@@ -2,6 +2,7 @@ package net.spacealtctrl.discordrp.ui.screens.presence
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.content.pm.ApplicationInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,6 +63,10 @@ data class PresenceUiState(
     val liveTrack: NowPlaying? = null,
     val titleMode: TitleMode = TitleMode.APP,
     val badgeMode: BadgeMode = BadgeMode.APP_ICON,
+    val customArtworkEnabled: Boolean = false,
+    val customArtworkUrl: String = "",
+    val customArtworkUploading: Boolean = false,
+    val customArtworkError: String? = null,
     val sampleAppLabel: String = "",
     val sampleAppPackage: String = "",
 )
@@ -71,6 +76,7 @@ class PresenceViewModel @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val stash: Stash,
     private val artRegistry: ArtRegistry,
+    private val externalArtworkHost: ExternalArtworkHost,
 ) : ViewModel() {
     private data class InstalledApp(
         val label: String,
@@ -84,7 +90,11 @@ class PresenceViewModel @Inject constructor(
 
     private var badgeRestartJob: Job? = null
 
-    val state: StateFlow<PresenceUiState> = combine(
+    private val customArtworkUploading = MutableStateFlow(false)
+    private val customArtworkError = MutableStateFlow<String?>(null)
+    private var customArtworkJob: Job? = null
+
+    private val baseState = combine(
         stash.revisions,
         installedApps.asStateFlow(),
         query.asStateFlow(),
@@ -130,6 +140,19 @@ class PresenceViewModel @Inject constructor(
             sampleAppLabel = installed.orEmpty()
                 .firstOrNull { it.packageName == samplePackage }?.label.orEmpty(),
             sampleAppPackage = samplePackage,
+            customArtworkEnabled = stash.customArtworkEnabled,
+            customArtworkUrl = stash.customArtworkUrl,
+        )
+    }
+
+    val state: StateFlow<PresenceUiState> = combine(
+        baseState,
+        customArtworkUploading.asStateFlow(),
+        customArtworkError.asStateFlow(),
+    ) { base, uploading, error ->
+        base.copy(
+            customArtworkUploading = uploading,
+            customArtworkError = error,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PresenceUiState())
 
@@ -177,6 +200,33 @@ class PresenceViewModel @Inject constructor(
         artRegistry.coverSourceChanged()
         BridgeFeed.artForgotten()
         nudgeBridge()
+    }
+
+    fun setCustomArtworkEnabled(enabled: Boolean) {
+        if (enabled && stash.customArtworkUrl.isBlank()) return
+        if (stash.customArtworkEnabled == enabled) return
+        stash.customArtworkEnabled = enabled
+        nudgeBridge()
+    }
+
+    fun uploadCustomArtwork(uri: Uri) {
+        if (customArtworkJob?.isActive == true) return
+        customArtworkJob = viewModelScope.launch {
+            customArtworkUploading.value = true
+            customArtworkError.value = null
+            try {
+                val url = externalArtworkHost.uploadCustomArtwork(uri)
+                stash.customArtworkUrl = url
+                stash.customArtworkEnabled = true
+                nudgeBridge()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                customArtworkError.value = error.message ?: "Не удалось загрузить изображение"
+            } finally {
+                customArtworkUploading.value = false
+            }
+        }
     }
 
     fun setMobileBadge(on: Boolean) {
