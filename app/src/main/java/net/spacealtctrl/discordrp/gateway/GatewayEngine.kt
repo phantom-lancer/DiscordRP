@@ -23,7 +23,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -92,9 +91,8 @@ class GatewayEngine(
     }
 
     override suspend fun publish(update: PresenceUpdate) {
-        val ready = withTimeoutOrNull(PUBLISH_WAIT_MS) { linked.first { it } }
-        if (ready == null) {
-            log.warn(TAG, "Session never came up; presence update dropped")
+        if (!linked.value) {
+            log.debug(TAG, "Presence update deferred until the gateway is linked")
             return
         }
         if (!transmit(Op.PRESENCE, GatewayCodec.encode(update))) {
@@ -354,7 +352,6 @@ class GatewayEngine(
         const val CEILING_BACKOFF_MS = 60_000L
         const val JITTER_MS = 500L
         const val REIDENTIFY_NAP_MS = 2_000L
-        const val PUBLISH_WAIT_MS = 30_000L
         const val CONNECT_TIMEOUT_MS = 30_000L
         const val DIAL_TIMEOUT_MS = 45_000L
         const val CLOSE_REASON_WAIT_MS = 2_000L
