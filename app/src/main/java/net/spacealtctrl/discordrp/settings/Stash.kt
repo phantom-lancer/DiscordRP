@@ -213,6 +213,10 @@ class Stash private constructor(
         get() = prefs.getString(KEY_CUSTOM_ART_URL, null).orEmpty()
         set(value) = write { putString(KEY_CUSTOM_ART_URL, value) }
 
+    var bitmapArtworkUploadEnabled: Boolean
+        get() = prefs.getBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, false)
+        set(value) = write { putBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, value) }
+
     fun dropDeezerCovers() {
         val kept = coverAssets - coverDeezerAssets
         write {
@@ -354,6 +358,7 @@ class Stash private constructor(
         private const val KEY_COVER_SOURCE = "art.cover_source"
         private const val KEY_CUSTOM_ART_ENABLED = "art.custom.enabled"
         private const val KEY_CUSTOM_ART_URL = "art.custom.url"
+        private const val KEY_BITMAP_ART_UPLOAD_ENABLED = "art.bitmap_upload.enabled"
         private const val KEY_COVER_DEEZER_ALBUMS = "art.cover_deezer_albums.v1"
         private val LEGACY_ART_KEYS = listOf(
             "art.cover_assets",
