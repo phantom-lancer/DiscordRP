@@ -79,21 +79,23 @@ class PresenceComposer @Inject constructor(
             title = track.title,
             durationMillis = track.durationMillis,
             artworkUrl = track.artworkUrl,
+            artwork = track.artwork,
         ).takeIf { !track.album.isNullOrBlank() || track.title.isNotBlank() }
         val icon = ArtSource.AppIcon(track.appPackage).takeIf { stash.showAppIcon }
+        val customArtwork = stash.customArtworkUrl.takeIf {
+            stash.customArtworkEnabled && ArtworkUrls.normalize(it) != null
+        }?.let { ArtSource.Remote(it, "custom-cover") }
 
-        val coverRef = artRegistry.resolve(cover)
+        val coverRef = customArtwork?.let { artRegistry.resolve(it) } ?: artRegistry.resolve(cover)
         val glyphRef = artRegistry.resolve(playbackGlyph(track))
-        val (large, small) = if (coverRef != null) {
-            coverRef to (glyphRef ?: artRegistry.resolve(icon))
+        val iconRef = artRegistry.resolve(icon)
+        val fallbackRef = if (coverRef == null && iconRef == null) {
+            artRegistry.resolve(ArtSource.DefaultIcon)
         } else {
-            val iconRef = artRegistry.resolve(icon)
-            when {
-                iconRef != null -> iconRef to glyphRef
-                glyphRef != null -> glyphRef to null
-                else -> null to null
-            }
+            null
         }
+        val large = coverRef ?: iconRef ?: fallbackRef
+        val small = if (coverRef != null) glyphRef ?: iconRef else glyphRef
         return PublishedArt(
             large = large,
             small = small,
