@@ -176,7 +176,9 @@
     <string name="cover_add_sent">Sent to MusicBrainz. Discord shows it once the Cover Art Archive has it.</string>
     <string name="presence_covers_title">Album covers</string>
     <string name="cover_source_player">Player artwork only</string>
-    <string name="cover_source_player_blurb">Use the image supplied by the player. Bitmap-only artwork is uploaded once on unmetered Wi-Fi; no automatic artwork upload uses mobile data.</string>
+    <string name="cover_source_player_blurb">Use the image supplied by the player. Bitmap-only artwork needs optional public hosting below; no automatic artwork upload uses mobile data.</string>
+    <string name="presence_bitmap_upload_toggle">Host bitmap-only covers on Wi-Fi</string>
+    <string name="presence_bitmap_upload_blurb">Only for players that expose a local image instead of a URL. DiscordRP compresses and uploads it to Catbox once per track; the image link is public. Never uploads over mobile data. Off by default.</string>
     <string name="custom_cover_header">Cover for every track</string>
     <string name="custom_cover_enable">Use my own cover</string>
     <string name="custom_cover_selected">Your image replaces the artwork from every player.</string>
