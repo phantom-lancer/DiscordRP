@@ -3,6 +3,13 @@ package net.spacealtctrl.discordrp.presence
 import android.graphics.Bitmap
 import androidx.compose.runtime.Immutable
 
+internal fun distinctMetadataText(excluded: String, vararg candidates: String?): String? =
+    candidates.firstNotNullOfOrNull { candidate ->
+        candidate?.trim()?.takeIf {
+            it.isNotEmpty() && !it.equals(excluded.trim(), ignoreCase = true)
+        }
+    }
+
 @Immutable
 data class NowPlaying(
     val title: String,
