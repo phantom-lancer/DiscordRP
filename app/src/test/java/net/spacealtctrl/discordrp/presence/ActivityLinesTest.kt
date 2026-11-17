@@ -33,12 +33,12 @@ class ActivityLinesTest {
     }
 
     @Test
-    fun `song layout headlines the track`() {
-        val lines = arrange(songAsTitle = true)
+    fun `default track layout stays independent of player name`() {
+        val lines = arrange(showAppName = false)
         assertEquals("Karry On", lines.name)
         assertEquals("Morning Glory", lines.details)
         assertEquals("War Psalms", lines.state)
-        assertEquals("Symfonium", lines.largeText)
+        assertEquals(null, lines.largeText)
     }
 
     @Test
@@ -68,6 +68,6 @@ class ActivityLinesTest {
         )
         assertEquals("Karry On", lines.name)
         assertEquals("", lines.state)
-        assertEquals("Symfonium", lines.largeText)
+        assertEquals(null, lines.largeText)
     }
 }
