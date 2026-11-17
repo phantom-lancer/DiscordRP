@@ -3,80 +3,78 @@
 </div>
 
 <div align="center">
-  <h1>DiscordRP</h1>
-  <h4>Restore Push / Rich Presence</h4>
+  <h1>DiscordRP Music</h1>
+  <h4>Music Rich Presence for Android</h4>
 </div>
 
 <p align="center">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Android%208.0%2B-FF7EB6">
-  <img alt="No Play Services" src="https://img.shields.io/badge/Play%20Services-not%20required-A97BFF">
+  <img alt="Google Play Services" src="https://img.shields.io/badge/Google%20Play%20Services-not%20required-A97BFF">
   <img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-blue">
 </p>
 
 ## About
 
-DiscordRP is built for de-Googled Android in mind: GrapheneOS, CalyxOS, LineageOS and /e/OS.
+DiscordRP Music reads Android media sessions and shows the track you're listening to as a Discord activity.
 
-DiscordRP keeps its own connection to Discord and shares the music you play on your profile.
-It does not create message notifications.
+It connects to Discord directly. No desktop companion or Google Play Services are required. Message notifications are not part of this app.
 
 ## Features
 
-- [x] Music rich presence from supported Android media sessions
-- [x] Album art from the player's own media metadata, MusicBrainz, or optional Deezer backup
-- [x] Set your Discord status and mobile badge from your phone
-- [x] Fast play, pause, stop, and seek updates
-- [x] Starts on boot and reconnects automatically
+- Track title, artist, album, playback state and timeline
+- Artwork from Android media metadata and direct HTTPS image links
+- Yandex Music, YAYAMA, Spotify, Deezer, Tidal, SoundCloud and local media players
+- Optional MusicBrainz cover lookup when the player has no usable artwork
+- Optional custom image used as the cover for every track
+- Optional hosting for bitmap-only player artwork, disabled by default and limited to unmetered networks
+- Discord status and mobile badge controls
+- Automatic reconnects and optional start on boot
+- Bundled default artwork when no cover or app icon is available
 
-## Screenshots
+## Requirements
 
-<div align="center">
-  <img src="docs/screens/home.png" width="30%" alt="Home: connection state and now playing">
-  <img src="docs/screens/presence.png" width="30%" alt="Presence: status and card contents">
-</div>
-
-## Download
-
-Get the latest APK from [Releases](../../releases). Android 8.0 or newer, no Google account
-or Play Services required.
-
-> **Warning**
-> This app uses the Discord gateway connection. Use it at your own risk.
+- Android 8.0 or newer
+- A Discord account
+- An internet connection
 
 ## Setup
 
-1. Install and open the app
-2. Grant notification access so DiscordRP can read active media sessions
-3. Sign in with Discord
-4. Turn the connection on
+1. Install the APK from [Releases](../../releases).
+2. Grant **Notification access** to DiscordRP in Android settings. Android uses this special access to expose active media sessions. DiscordRP reads playback metadata, not notification text.
+3. Sign in with Discord.
+4. Open the Presence tab, select your players and enable sharing.
+5. For reliable background playback, allow unrestricted battery use for DiscordRP.
 
-Enable **Unrestricted battery** during setup. Aggressive battery management can suspend the connection while the screen is off.
+## Artwork
 
-## Privacy
+DiscordRP prefers artwork provided by the player. Public HTTPS artwork URLs are sent directly as Rich Presence assets.
 
-No analytics, no crash reporting, and no server in the middle. The app talks to Discord,
-MusicBrainz, the Cover Art Archive, and (when enabled) Deezer directly. Your login stays on the device and is
-removed by signing out.
+Some players provide only a local bitmap. The optional **Host bitmap-only covers on Wi-Fi** setting can compress and upload those images to Catbox. It is off by default. Uploaded images have public links.
 
-Album art is taken from the player's HTTPS media metadata first. Yandex Music image-size placeholders
-are normalized automatically. MusicBrainz and the Cover Art Archive are used as fallbacks. In the Presence tab, under
-**Album covers**, you can pick **MusicBrainz (+ Deezer backup)**. The app then asks Deezer
-directly, and only when MusicBrainz has no cover.
+You can also choose one custom image for all tracks. Android images are uploaded only after you confirm the public upload notice. Anyone with the resulting link can view the image.
 
-## Help [MusicBrainz](https://musicbrainz.org)
+If no artwork is available, DiscordRP uses its bundled default image.
 
-With **MusicBrainz (+ Deezer backup)** on, DiscordRP shows a button on Home when
-MusicBrainz is missing the album/cover. Tap it to add the album (filled in from Deezer
-with its cover) or just the cover (from your player), so the cover shows for everyone and
-loads faster from then on.
+## Network and privacy
+
+- DiscordRP does not read message or notification text.
+- There is no message mirroring or message notification feature.
+- Your Discord login is stored on the device using Android Keystore protection.
+- Player artwork supplied as a public HTTPS URL is not re-uploaded by DiscordRP.
+- Bitmap hosting and custom covers use Catbox and make the uploaded image public.
+- MusicBrainz lookup is optional and is not used on metered mobile connections.
+
+## Updating
+
+Install newer builds from [Releases](../../releases). New releases use the same signing key so they can update an existing installation.
+
+A one-time reinstall may be required when moving from an older build signed with a different key. Android will report a signature conflict if the signing keys do not match. Uninstalling removes the app's local settings and login.
 
 ## Credits
 
-The rich presence implementation draws on ideas from [Kizzy](https://github.com/dead8309/Kizzy)
-by **dead8309**.
+The Rich Presence implementation draws on ideas from [Kizzy](https://github.com/dead8309/Kizzy) by **dead8309**.
 
-Security hardening of token storage, the login page and updates by **cutieway** in
-[#31](../../pull/31).
+Security hardening of token storage, the login page and updates by **cutieway** in [#31](../../pull/31).
 
 ## License
 
