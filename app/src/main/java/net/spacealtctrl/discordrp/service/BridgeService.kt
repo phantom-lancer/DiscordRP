@@ -103,6 +103,11 @@ class BridgeService : Service() {
 
         _alive.value = true
         lastUpAt = System.currentTimeMillis()
+        scope.launch {
+            artRegistry.artworkAvailable.collect {
+                scheduleRefresh(delayMs = 0)
+            }
+        }
         stash.purgeStaleArtCaches()
         applyPowerMode()
         openGateway()
