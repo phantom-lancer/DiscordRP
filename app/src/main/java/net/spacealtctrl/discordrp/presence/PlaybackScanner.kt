@@ -67,16 +67,18 @@ class PlaybackScanner @Inject constructor(
 
         return NowPlaying(
             title = title,
-            artist = metadata.firstText(
-                MediaMetadata.METADATA_KEY_ARTIST,
-                MediaMetadata.METADATA_KEY_AUTHOR,
-                MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE,
+            artist = distinctMetadataText(
+                title,
+                metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
+                metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
+                metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
             ),
             album = metadata.firstText(MediaMetadata.METADATA_KEY_ALBUM),
-            albumArtist = metadata.firstText(
-                MediaMetadata.METADATA_KEY_ALBUM_ARTIST,
-                MediaMetadata.METADATA_KEY_ARTIST,
-                MediaMetadata.METADATA_KEY_AUTHOR,
+            albumArtist = distinctMetadataText(
+                title,
+                metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
+                metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
+                metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
             ),
             appLabel = labelFor(controller.packageName),
             appPackage = controller.packageName,
@@ -95,7 +97,7 @@ class PlaybackScanner @Inject constructor(
 
     private fun readLocalArtwork(rawUri: String) = runCatching {
         val uri = Uri.parse(rawUri)
-        if (uri.scheme != "content") return@runCatching null
+        if (uri.scheme !in setOf("content", "file", "android.resource")) return@runCatching null
 
         val resolver = context.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -137,7 +139,10 @@ class PlaybackScanner @Inject constructor(
     }
 
     private fun MediaMetadata.firstText(vararg keys: String): String? =
-        keys.firstNotNullOfOrNull { key -> getString(key)?.trim()?.takeIf { it.isNotEmpty() } }
+        keys.firstNotNullOfOrNull { key -> text(key)?.trim()?.takeIf { it.isNotEmpty() } }
+
+    private fun MediaMetadata.text(key: String): String? =
+        runCatching { getString(key) }.getOrNull()
 
     private fun MediaMetadata.bitmap(key: String) =
         runCatching { getBitmap(key) }.getOrNull()
