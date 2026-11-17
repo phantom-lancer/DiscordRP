@@ -112,7 +112,9 @@ class DiscordApi @Inject constructor(
         }
         response.raiseForStatus()
         val assets: List<HostedAsset> = response.body()
-        "mp:" + assets.first().path
+        val path = assets.firstOrNull()?.path?.takeIf { it.isNotBlank() }
+            ?: error("Discord returned no external asset")
+        "mp:" + path
     }
 
     suspend fun mediaShows(reference: String): Boolean? {

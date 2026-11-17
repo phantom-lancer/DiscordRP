@@ -11,6 +11,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Title
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -78,6 +81,7 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
     val context = LocalContext.current
     var selectedCustomArtwork by remember { mutableStateOf<Uri?>(null) }
     var customArtworkNotice by remember { mutableStateOf(false) }
+    var catboxHashDraft by remember { mutableStateOf("") }
     val customArtworkPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching {
@@ -188,6 +192,65 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
                             style = MaterialTheme.typography.bodySmall,
                             color = Look.palette.danger,
                             modifier = Modifier.padding(horizontal = Look.gaps.room, vertical = Look.gaps.snug),
+                        )
+                    }
+                }
+            }
+
+            item {
+                SectionHeader(stringResource(R.string.catbox_userhash_header))
+                Cluster {
+                    Text(
+                        text = stringResource(R.string.catbox_userhash_blurb),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Look.palette.inkFaint,
+                        modifier = Modifier.padding(
+                            horizontal = Look.gaps.room,
+                            vertical = Look.gaps.snug,
+                        ),
+                    )
+                    OutlinedTextField(
+                        value = catboxHashDraft,
+                        onValueChange = { catboxHashDraft = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Look.gaps.room),
+                        label = { Text(stringResource(R.string.catbox_userhash_label)) },
+                        placeholder = { Text(stringResource(R.string.catbox_userhash_placeholder)) },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Look.gaps.room, vertical = Look.gaps.snug),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextButton(
+                            onClick = {
+                                viewModel.saveCatboxUserHash(catboxHashDraft)
+                                catboxHashDraft = ""
+                            },
+                            enabled = catboxHashDraft.isNotBlank(),
+                        ) {
+                            Text(stringResource(R.string.catbox_userhash_save))
+                        }
+                        if (state.catboxUserHashConfigured) {
+                            TextButton(onClick = viewModel::clearCatboxUserHash) {
+                                Text(stringResource(R.string.catbox_userhash_clear))
+                            }
+                        }
+                    }
+                    if (state.catboxUserHashConfigured) {
+                        Text(
+                            text = stringResource(R.string.catbox_userhash_saved),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Look.palette.positive,
+                            modifier = Modifier.padding(
+                                horizontal = Look.gaps.room,
+                                vertical = Look.gaps.tight,
+                            ),
                         )
                     }
                 }
@@ -384,7 +447,7 @@ private fun ShareFacet.labelRes(): Int = when (this) {
     ShareFacet.PLAYBACK_GLYPH -> R.string.facet_playback_glyph
     ShareFacet.APP_ICON -> R.string.facet_app_icon
     ShareFacet.HIDE_PAUSED -> R.string.facet_hide_paused
-    ShareFacet.SONG_AS_TITLE -> R.string.facet_song_as_title
+    ShareFacet.APP_NAME -> R.string.facet_app_name
     ShareFacet.ARTIST_AS_TITLE -> R.string.facet_artist_as_title
 }
 
@@ -395,7 +458,7 @@ private fun ShareFacet.icon(): ImageVector = when (this) {
     ShareFacet.PLAYBACK_GLYPH -> Icons.Rounded.PlayCircle
     ShareFacet.APP_ICON -> Icons.Rounded.Apps
     ShareFacet.HIDE_PAUSED -> Icons.Rounded.PauseCircle
-    ShareFacet.SONG_AS_TITLE -> Icons.Rounded.Title
+    ShareFacet.APP_NAME -> Icons.Rounded.Apps
     ShareFacet.ARTIST_AS_TITLE -> Icons.Rounded.Title
 }
 

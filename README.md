@@ -22,7 +22,7 @@ It connects to Discord directly. No desktop companion or Google Play Services ar
 ## Features
 
 - Track title, artist, album, playback state and timeline
-- Artwork from Android media metadata and direct HTTPS image links
+- Artwork from Android media metadata and Discord-registered HTTPS image assets
 - Yandex Music, YAYAMA, Spotify, Deezer, Tidal, SoundCloud and local media players
 - Optional MusicBrainz cover lookup when the player has no usable artwork
 - Optional custom image used as the cover for every track
@@ -47,11 +47,11 @@ It connects to Discord directly. No desktop companion or Google Play Services ar
 
 ## Artwork
 
-DiscordRP prefers artwork provided by the player. Public HTTPS artwork URLs are sent directly as Rich Presence assets.
+DiscordRP prefers artwork provided by the player. HTTPS artwork is registered through Discord's external asset API and then referenced by the Rich Presence activity. This registration is required for Discord to display external artwork.
 
 Some players provide only a local bitmap. The optional **Host bitmap-only covers on Wi-Fi** setting can compress and upload those images to Catbox. It is off by default. Uploaded images have public links.
 
-You can also choose one custom image for all tracks. Android images are uploaded only after you confirm the public upload notice. Anyone with the resulting link can view the image.
+You can also choose one custom image for all tracks. Android images are uploaded only after you confirm the public upload notice. Anyone with the resulting link can view the image. If Catbox rejects anonymous uploads with HTTP 412, add your Catbox userhash in the Presence settings; it is encrypted with Android Keystore on the device.
 
 If no artwork is available, DiscordRP uses its bundled default image.
 
@@ -60,7 +60,7 @@ If no artwork is available, DiscordRP uses its bundled default image.
 - DiscordRP does not read message or notification text.
 - There is no message mirroring or message notification feature.
 - Your Discord login is stored on the device using Android Keystore protection.
-- Player artwork supplied as a public HTTPS URL is not re-uploaded by DiscordRP.
+- Player artwork supplied as a public HTTPS URL is registered with Discord, not re-uploaded to a third-party image host.
 - Bitmap hosting and custom covers use Catbox and make the uploaded image public.
 - MusicBrainz lookup is optional and is not used on metered mobile connections.
 

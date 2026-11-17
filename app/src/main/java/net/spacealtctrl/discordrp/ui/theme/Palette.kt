@@ -2,6 +2,7 @@ package net.spacealtctrl.discordrp.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
@@ -49,7 +50,28 @@ data class Palette(
         )
 
     val heroGlow: Brush
-        get() = Brush.linearGradient(listOf(Color(0x2EFF7EB6), Color(0x0AFF7EB6)))
+        get() = Brush.linearGradient(listOf(accentWash, accentFaint))
+
+    companion object {
+        fun from(scheme: ColorScheme): Palette = Palette(
+            abyss = scheme.surfaceContainerLowest,
+            canvas = scheme.background,
+            panel = scheme.surfaceContainer,
+            raised = scheme.surfaceContainerHigh,
+            hover = scheme.surfaceContainerHighest,
+            outline = scheme.outline,
+            outlineSoft = scheme.outlineVariant,
+            ink = scheme.onSurface,
+            inkFaint = scheme.onSurfaceVariant,
+            inkGhost = scheme.onSurfaceVariant.copy(alpha = 0.68f),
+            inkOnAccent = scheme.onPrimary,
+            accent = scheme.primary,
+            accentDeep = scheme.primaryContainer,
+            accentBright = scheme.secondary,
+            accentWash = scheme.primary.copy(alpha = 0.20f),
+            accentFaint = scheme.primary.copy(alpha = 0.10f),
+        )
+    }
 }
 
 val LocalPalette = staticCompositionLocalOf { Palette() }

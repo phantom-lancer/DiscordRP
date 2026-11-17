@@ -35,12 +35,12 @@ data class PlayerChoice(
 )
 
 enum class ShareFacet {
-    ARTIST, ALBUM, TIMELINE, PLAYBACK_GLYPH, APP_ICON, HIDE_PAUSED, SONG_AS_TITLE, ARTIST_AS_TITLE;
+    ARTIST, ALBUM, TIMELINE, PLAYBACK_GLYPH, APP_ICON, APP_NAME, HIDE_PAUSED, ARTIST_AS_TITLE;
 
     val rival: ShareFacet?
         get() = when (this) {
-            SONG_AS_TITLE -> ARTIST_AS_TITLE
-            ARTIST_AS_TITLE -> SONG_AS_TITLE
+            APP_NAME -> ARTIST_AS_TITLE
+            ARTIST_AS_TITLE -> APP_NAME
             PLAYBACK_GLYPH -> APP_ICON
             APP_ICON -> PLAYBACK_GLYPH
             else -> null
@@ -69,6 +69,7 @@ data class PresenceUiState(
     val customArtworkUploading: Boolean = false,
     val customArtworkError: String? = null,
     val bitmapArtworkUploadEnabled: Boolean = false,
+    val catboxUserHashConfigured: Boolean = false,
     val sampleAppLabel: String = "",
     val sampleAppPackage: String = "",
 )
@@ -131,8 +132,8 @@ class PresenceViewModel @Inject constructor(
             liveTrack = snapshot.track,
             titleMode = when {
                 stash.artistAsTitle -> TitleMode.ARTIST
-                stash.songAsTitle -> TitleMode.SONG
-                else -> TitleMode.APP
+                stash.showAppName -> TitleMode.APP
+                else -> TitleMode.SONG
             },
             badgeMode = when {
                 stash.showPlaybackGlyph -> BadgeMode.GLYPH
@@ -145,6 +146,7 @@ class PresenceViewModel @Inject constructor(
             customArtworkEnabled = stash.customArtworkEnabled,
             customArtworkUrl = stash.customArtworkUrl,
             bitmapArtworkUploadEnabled = stash.bitmapArtworkUploadEnabled,
+            catboxUserHashConfigured = stash.hasCatboxUserHash,
         )
     }
 
@@ -218,6 +220,18 @@ class PresenceViewModel @Inject constructor(
         if (enabled) nudgeBridge()
     }
 
+    fun saveCatboxUserHash(value: String) {
+        if (value.isBlank()) return
+        stash.catboxUserHash = value
+        nudgeBridge()
+    }
+
+    fun clearCatboxUserHash() {
+        if (!stash.hasCatboxUserHash) return
+        stash.clearCatboxUserHash()
+        nudgeBridge()
+    }
+
     fun uploadCustomArtwork(uri: Uri) {
         if (customArtworkJob?.isActive == true) return
         customArtworkJob = viewModelScope.launch {
@@ -252,10 +266,8 @@ class PresenceViewModel @Inject constructor(
     }
 
     fun setTitleMode(mode: TitleMode) {
-        if (mode != TitleMode.SONG) stash.songAsTitle = false
-        if (mode != TitleMode.ARTIST) stash.artistAsTitle = false
-        if (mode == TitleMode.SONG) stash.songAsTitle = true
-        if (mode == TitleMode.ARTIST) stash.artistAsTitle = true
+        stash.showAppName = mode == TitleMode.APP
+        stash.artistAsTitle = mode == TitleMode.ARTIST
         nudgeBridge()
     }
 
@@ -286,7 +298,7 @@ class PresenceViewModel @Inject constructor(
         ShareFacet.PLAYBACK_GLYPH -> stash.showPlaybackGlyph
         ShareFacet.APP_ICON -> stash.showAppIcon
         ShareFacet.HIDE_PAUSED -> stash.hideWhenPaused
-        ShareFacet.SONG_AS_TITLE -> stash.songAsTitle
+        ShareFacet.APP_NAME -> stash.showAppName
         ShareFacet.ARTIST_AS_TITLE -> stash.artistAsTitle
     }
 
@@ -297,7 +309,7 @@ class PresenceViewModel @Inject constructor(
         ShareFacet.PLAYBACK_GLYPH -> stash.showPlaybackGlyph = value
         ShareFacet.APP_ICON -> stash.showAppIcon = value
         ShareFacet.HIDE_PAUSED -> stash.hideWhenPaused = value
-        ShareFacet.SONG_AS_TITLE -> stash.songAsTitle = value
+        ShareFacet.APP_NAME -> stash.showAppName = value
         ShareFacet.ARTIST_AS_TITLE -> stash.artistAsTitle = value
     }
 
