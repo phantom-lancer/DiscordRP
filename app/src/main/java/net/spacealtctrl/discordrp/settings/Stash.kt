@@ -228,7 +228,7 @@ class Stash private constructor(
         set(value) = write { putString(KEY_CUSTOM_ART_URL, value) }
 
     var bitmapArtworkUploadEnabled: Boolean
-        get() = prefs.getBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, false)
+        get() = prefs.getBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, hasCatboxUserHash)
         set(value) = write { putBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, value) }
 
     var catboxUserHash: String
