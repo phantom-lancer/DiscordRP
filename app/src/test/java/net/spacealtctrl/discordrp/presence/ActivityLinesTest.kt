@@ -28,8 +28,8 @@ class ActivityLinesTest {
         val lines = arrange(showAppName = true)
         assertEquals("Symfonium", lines.name)
         assertEquals("Karry On", lines.details)
-        assertEquals("War Psalms", lines.state)
-        assertEquals(null, lines.largeText)
+        assertEquals("Morning Glory", lines.state)
+        assertEquals("War Psalms", lines.largeText)
     }
 
     @Test
@@ -46,8 +46,8 @@ class ActivityLinesTest {
         val lines = arrange(artistAsTitle = true)
         assertEquals("Morning Glory", lines.name)
         assertEquals("Karry On", lines.details)
-        assertEquals("Morning Glory", lines.state)
-        assertEquals("War Psalms", lines.largeText)
+        assertEquals("War Psalms", lines.state)
+        assertEquals(null, lines.largeText)
     }
 
     @Test
