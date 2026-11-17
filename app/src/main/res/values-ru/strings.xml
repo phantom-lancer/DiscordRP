@@ -29,7 +29,9 @@
     <string name="tile_on_subtitle">Включено</string>
     <string name="cover_source_musicbrainz_blurb">Сначала обложка из плеера. Если её нет, используется MusicBrainz и Cover Art Archive.</string>
     <string name="cover_source_player">Только обложка плеера</string>
-    <string name="cover_source_player_blurb">Берёт картинку напрямую из музыкального приложения. Если плеер отдаёт только bitmap, он отправляется один раз по Wi‑Fi. По мобильной сети автоматической загрузки обложек нет.</string>
+    <string name="cover_source_player_blurb">Берёт картинку напрямую из музыкального приложения. Для плееров, которые отдают только локальную картинку, ниже есть отдельная настройка публичной загрузки.</string>
+    <string name="presence_bitmap_upload_toggle">Публиковать bitmap-обложки по Wi‑Fi</string>
+    <string name="presence_bitmap_upload_blurb">Только для плееров, которые отдают локальную картинку вместо URL. DiscordRP сжимает её и один раз на трек загружает на Catbox. Ссылка публичная. По мобильной сети загрузки нет. По умолчанию выключено.</string>
     <string name="custom_cover_header">Обложка для всех треков</string>
     <string name="custom_cover_enable">Использовать свою обложку</string>
     <string name="custom_cover_selected">Твоя картинка заменит обложки во всех плеерах.</string>
