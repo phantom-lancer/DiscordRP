@@ -70,7 +70,7 @@ class ArtRegistry @Inject constructor(
         }
 
         val bitmap = cover.artwork
-        if (bitmap != null && stash.powerMode.fetchesRemoteArt && !unavailableIsFresh(cover.cacheKey)) {
+        if (bitmap != null && stash.bitmapArtworkUploadEnabled && stash.powerMode.fetchesRemoteArt && !unavailableIsFresh(cover.cacheKey)) {
             val uploaded = runCatching {
                 externalArtworkHost.uploadBitmapOnUnmeteredNetwork(bitmap)
             }.onFailure {
