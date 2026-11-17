@@ -294,7 +294,7 @@ fun HeroArt(
     val context = LocalContext.current
     val frame = HeroFrame(
         song = "${track.appPackage}|${track.title}",
-        picture = art?.let { DiscordMedia.url(it.large) ?: NO_PICTURE },
+        picture = track.artwork ?: art?.let { DiscordMedia.url(it.large) ?: NO_PICTURE },
         badge = DiscordMedia.url(art?.small),
     )
     AnimatedContent(
@@ -375,6 +375,6 @@ fun HeroArt(
     }
 }
 
-private data class HeroFrame(val song: String, val picture: String?, val badge: String?)
+private data class HeroFrame(val song: String, val picture: Any?, val badge: String?)
 
 private const val NO_PICTURE = ""
