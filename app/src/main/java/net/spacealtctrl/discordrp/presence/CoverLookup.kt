@@ -243,7 +243,7 @@ class CoverLookup @Inject constructor(
         const val TAG = "CoverLookup"
         const val MUSICBRAINZ = "https://musicbrainz.org/ws/2"
         const val COVER_ART_ARCHIVE = "https://coverartarchive.org"
-        const val AGENT = "DiscordRP/2.0 ( https://github.com/spacealtctrl/DiscordRP )"
+        const val AGENT = "DiscordRP/2.0 ( https://github.com/phantom-lancer/DiscordRP )"
 
         const val BRAINZ_INTERVAL_MS = 1_100L
         const val BRAINZ_ATTEMPTS = 6

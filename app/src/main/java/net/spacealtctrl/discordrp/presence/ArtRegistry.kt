@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.DisplayMetrics
 import dagger.hilt.android.qualifiers.ApplicationContext
+import net.spacealtctrl.discordrp.discord.ApiRefusal
+import net.spacealtctrl.discordrp.discord.DiscordApi
+import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.settings.Stash
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -30,9 +33,11 @@ sealed interface ArtSource {
 @Singleton
 class ArtRegistry @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val api: DiscordApi,
     private val coverLookup: CoverLookup,
     private val deezerCovers: DeezerCovers,
     private val stash: Stash,
+    private val log: AppLog,
 ) {
     private val unavailableAt = ConcurrentHashMap<String, Long>()
     private val unavailableStreak = ConcurrentHashMap<String, Int>()
@@ -50,13 +55,13 @@ class ArtRegistry @Inject constructor(
         val generation = coverGeneration.get()
         val directArtwork = ArtworkUrls.normalize(cover.artworkUrl)
         if (directArtwork != null) {
-            if (isStale(generation)) return null
-            if (stash.coverAssets[cover.cacheKey] != directArtwork) {
-                stash.coverAssets = stash.coverAssets + (cover.cacheKey to directArtwork)
+            val hosted = store(directArtwork, cover.cacheKey, generation)
+            if (hosted != null) {
+                forgetMiss(cover.cacheKey)
+                unavailableStreak.remove(cover.cacheKey)
+                return hosted
             }
-            forgetMiss(cover.cacheKey)
-            unavailableStreak.remove(cover.cacheKey)
-            return directArtwork
+            log.warn(TAG, "Could not register the player's artwork with Discord")
         }
 
         val cached = stash.coverAssets[cover.cacheKey]
@@ -227,14 +232,19 @@ class ArtRegistry @Inject constructor(
     }
 
     private suspend fun resolveAppIcon(icon: ArtSource.AppIcon): String? {
-        val cached = stash.appIconAssets[icon.packageName]?.takeIf(String::isNotBlank)
-        if (!stash.powerMode.fetchesRemoteArt) return cached
+        stash.appIconAssets[icon.packageName]?.let { return it.takeIf(String::isNotBlank) }
+        if (!stash.powerMode.fetchesRemoteArt) return null
 
         val name = HostedIcons.nameFor(icon.packageName)
-        val reference = ArtworkUrls.normalize("$ICON_BASE/$name.png?v=$ICON_REVISION")
-            ?: return cached
-        if (cached != reference) {
-            stash.appIconAssets = stash.appIconAssets + (icon.packageName to reference)
+        val result = api.hostedAssetFor("$ICON_BASE/$name.png?v=$ICON_REVISION")
+        val reference = result.getOrNull()
+        when {
+            reference != null ->
+                stash.appIconAssets = stash.appIconAssets + (icon.packageName to reference)
+            result.exceptionOrNull() is ApiRefusal -> {
+                log.warn(TAG, "No hosted icon for " + icon.packageName)
+                stash.appIconAssets = stash.appIconAssets + (icon.packageName to "")
+            }
         }
         return reference
     }
@@ -246,11 +256,20 @@ class ArtRegistry @Inject constructor(
 
     private suspend fun store(url: String, cacheKey: String, generation: Int): String? {
         if (!stash.powerMode.fetchesRemoteArt) return null
-        val reference = ArtworkUrls.normalize(url) ?: return null
-        if (isStale(generation)) return null
-        stash.coverAssets = stash.coverAssets + (cacheKey to reference)
-        unavailableStreak.remove(cacheKey)
-        return reference
+        for (candidate in CoverUrls.displayCandidates(url)) {
+            val reference = api.hostedAssetFor(candidate)
+                .onFailure { log.warn(TAG, "Discord refused $candidate: " + it.message) }
+                .getOrNull() ?: continue
+            if (api.mediaShows(reference) == false) {
+                log.warn(TAG, "Discord cannot show " + candidate)
+                continue
+            }
+            if (isStale(generation)) return null
+            stash.coverAssets = stash.coverAssets + (cacheKey to reference)
+            unavailableStreak.remove(cacheKey)
+            return reference
+        }
+        return null
     }
 
     fun iconBitmap(packageName: String): Bitmap? = runCatching {
