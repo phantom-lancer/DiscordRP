@@ -58,6 +58,19 @@ class PlaybackScanner @Inject constructor(
             MediaMetadata.METADATA_KEY_TITLE,
             MediaMetadata.METADATA_KEY_DISPLAY_TITLE,
         ) ?: return null
+        val artist = resolveArtistMetadata(
+            title = title,
+            artist = metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
+            author = metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
+            albumArtist = metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
+            displaySubtitle = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
+        )
+        val albumArtist = distinctMetadataText(
+            title,
+            metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
+            metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
+            metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
+        )
         val artworkUri = metadata.firstText(
             MediaMetadata.METADATA_KEY_ALBUM_ART_URI,
             MediaMetadata.METADATA_KEY_ART_URI,
@@ -67,19 +80,9 @@ class PlaybackScanner @Inject constructor(
 
         return NowPlaying(
             title = title,
-            artist = distinctMetadataText(
-                title,
-                metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
-                metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
-                metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
-            ),
+            artist = artist,
             album = metadata.firstText(MediaMetadata.METADATA_KEY_ALBUM),
-            albumArtist = distinctMetadataText(
-                title,
-                metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
-                metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
-                metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
-            ),
+            albumArtist = albumArtist,
             appLabel = labelFor(controller.packageName),
             appPackage = controller.packageName,
             artwork = metadata.bitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
@@ -114,6 +117,7 @@ class PlaybackScanner @Inject constructor(
         val options = BitmapFactory.Options().apply { inSampleSize = sample }
         resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, options) }
     }.getOrNull()
+
     private fun playbackPriority(state: Int?): Int = when (state) {
         PlaybackState.STATE_PLAYING -> 0
         PlaybackState.STATE_BUFFERING,
