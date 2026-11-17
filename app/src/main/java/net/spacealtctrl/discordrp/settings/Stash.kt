@@ -205,6 +205,14 @@ class Stash private constructor(
         get() = CoverSource.fromStored(prefs.getString(KEY_COVER_SOURCE, null))
         set(value) = write { putString(KEY_COVER_SOURCE, value.stored) }
 
+    var customArtworkEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CUSTOM_ART_ENABLED, false)
+        set(value) = write { putBoolean(KEY_CUSTOM_ART_ENABLED, value) }
+
+    var customArtworkUrl: String
+        get() = prefs.getString(KEY_CUSTOM_ART_URL, null).orEmpty()
+        set(value) = write { putString(KEY_CUSTOM_ART_URL, value) }
+
     fun dropDeezerCovers() {
         val kept = coverAssets - coverDeezerAssets
         write {
@@ -344,6 +352,8 @@ class Stash private constructor(
         private const val KEY_COVER_MISS_GROUPS = "art.cover_miss_groups.v1"
         private const val KEY_COVER_UPLOADS = "art.cover_uploads.v1"
         private const val KEY_COVER_SOURCE = "art.cover_source"
+        private const val KEY_CUSTOM_ART_ENABLED = "art.custom.enabled"
+        private const val KEY_CUSTOM_ART_URL = "art.custom.url"
         private const val KEY_COVER_DEEZER_ALBUMS = "art.cover_deezer_albums.v1"
         private val LEGACY_ART_KEYS = listOf(
             "art.cover_assets",
@@ -372,6 +382,7 @@ class Stash private constructor(
             "com.soundcloud.android",
             "com.spotify.music",
             "ru.yandex.music",
+            "io.github.darkplayoff.yayma",
             "deezer.android.app",
         )
 
