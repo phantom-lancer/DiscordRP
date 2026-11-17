@@ -15,6 +15,22 @@ class ActivityLinesTest {
         )
 
     @Test
+    fun `artist metadata never repeats the track title`() {
+        assertEquals(
+            "Correct Artist",
+            distinctMetadataText("Track Name", " Track Name ", "Correct Artist"),
+        )
+    }
+
+    @Test
+    fun `duplicate artist candidates are ignored`() {
+        assertEquals(
+            null,
+            distinctMetadataText("Track Name", "Track Name", " track name ", " "),
+        )
+    }
+
+    @Test
     fun `default layout headlines the track and hides the player`() {
         val lines = arrange()
         assertEquals("Karry On", lines.name)
