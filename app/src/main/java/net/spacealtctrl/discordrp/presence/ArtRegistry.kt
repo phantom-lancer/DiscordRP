@@ -9,6 +9,12 @@ import net.spacealtctrl.discordrp.log.AppLog
 import net.spacealtctrl.discordrp.settings.Stash
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,6 +49,10 @@ class ArtRegistry @Inject constructor(
     private val unavailableStreak = ConcurrentHashMap<String, Int>()
     private val uploadCheckedAt = ConcurrentHashMap<String, Long>()
     private val coverGeneration = AtomicInteger()
+    private val uploadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val pendingBitmapUploads = ConcurrentHashMap.newKeySet<String>()
+    private val _artworkAvailable = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val artworkAvailable = _artworkAvailable.asSharedFlow()
 
     suspend fun resolve(source: ArtSource?): String? = when (source) {
         null -> null
@@ -70,18 +80,12 @@ class ArtRegistry @Inject constructor(
         }
 
         val bitmap = cover.artwork
-        if (bitmap != null && stash.bitmapArtworkUploadEnabled && stash.powerMode.fetchesRemoteArt && !unavailableIsFresh(cover.cacheKey)) {
-            val uploaded = runCatching {
-                externalArtworkHost.uploadBitmapOnUnmeteredNetwork(bitmap)
-            }.onFailure {
-                log.warn(TAG, "Could not upload bitmap artwork: " + it.javaClass.simpleName)
-            }.getOrNull()
-            if (uploaded != null && !isStale(generation)) {
-                stash.coverAssets = stash.coverAssets + (cover.cacheKey to uploaded)
-                forgetMiss(cover.cacheKey)
-                unavailableStreak.remove(cover.cacheKey)
-                return uploaded
-            }
+        if (bitmap != null &&
+            stash.bitmapArtworkUploadEnabled &&
+            stash.powerMode.fetchesRemoteArt &&
+            !unavailableIsFresh(cover.cacheKey)
+        ) {
+            queueBitmapUpload(cover, generation)
         }
 
         if (!stash.coverSource.usesMusicBrainzFallback ||
@@ -113,6 +117,26 @@ class ArtRegistry @Inject constructor(
                 null
             }
             CoverResult.Unavailable -> markUnavailable(cover.cacheKey, generation)
+        }
+    }
+
+    private fun queueBitmapUpload(cover: ArtSource.Cover, generation: Int) {
+        if (!pendingBitmapUploads.add(cover.cacheKey)) return
+        uploadScope.launch {
+            try {
+                val bitmap = cover.artwork ?: return@launch
+                val uploaded = externalArtworkHost.uploadBitmapOnUnmeteredNetwork(bitmap) ?: return@launch
+                if (isStale(generation)) return@launch
+
+                stash.coverAssets = stash.coverAssets + (cover.cacheKey to uploaded)
+                forgetMiss(cover.cacheKey)
+                unavailableStreak.remove(cover.cacheKey)
+                _artworkAvailable.tryEmit(Unit)
+            } catch (error: Exception) {
+                log.warn(TAG, "Could not upload bitmap artwork: " + error.javaClass.simpleName)
+            } finally {
+                pendingBitmapUploads.remove(cover.cacheKey)
+            }
         }
     }
 
