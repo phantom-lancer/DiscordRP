@@ -36,6 +36,7 @@ class ExternalArtworkHost @Inject constructor(
     suspend fun uploadBitmapOnUnmeteredNetwork(bitmap: Bitmap): String? {
         if (!isUnmeteredNetwork()) return null
         val bytes = withContext(Dispatchers.Default) { compress(bitmap) }
+        if (!isUnmeteredNetwork()) return null
         return uploadJpeg(bytes)
     }
 
