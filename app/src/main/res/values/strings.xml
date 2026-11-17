@@ -176,7 +176,7 @@
     <string name="cover_add_sent">Sent to MusicBrainz. Discord shows it once the Cover Art Archive has it.</string>
     <string name="presence_covers_title">Album covers</string>
     <string name="cover_source_player">Player artwork only</string>
-    <string name="cover_source_player_blurb">Use the image supplied by the player. No cover search or extra artwork requests.</string>
+    <string name="cover_source_player_blurb">Use the image supplied by the player. Bitmap-only artwork is uploaded once on unmetered Wi-Fi; no automatic artwork upload uses mobile data.</string>
     <string name="custom_cover_header">Cover for every track</string>
     <string name="custom_cover_enable">Use my own cover</string>
     <string name="custom_cover_selected">Your image replaces the artwork from every player.</string>
