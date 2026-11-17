@@ -84,7 +84,7 @@ class PresenceComposer @Inject constructor(
         val icon = ArtSource.AppIcon(track.appPackage).takeIf { stash.showAppIcon }
         val customArtwork = stash.customArtworkUrl.takeIf {
             stash.customArtworkEnabled && ArtworkUrls.normalize(it) != null
-        }?.let { ArtSource.Remote(it, "custom-cover") }
+        }?.let { ArtSource.Remote(it, "custom-cover:" + it.hashCode()) }
 
         val coverRef = customArtwork?.let { artRegistry.resolve(it) } ?: artRegistry.resolve(cover)
         val glyphRef = artRegistry.resolve(playbackGlyph(track))
