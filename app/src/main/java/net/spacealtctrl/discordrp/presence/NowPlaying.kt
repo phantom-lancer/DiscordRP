@@ -2,13 +2,36 @@ package net.spacealtctrl.discordrp.presence
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Immutable
+import java.text.Normalizer
+import java.util.Locale
 
-internal fun distinctMetadataText(excluded: String, vararg candidates: String?): String? =
-    candidates.firstNotNullOfOrNull { candidate ->
-        candidate?.trim()?.takeIf {
-            it.isNotEmpty() && !it.equals(excluded.trim(), ignoreCase = true)
-        }
+private val invisibleMetadataCharacters = Regex("[\\p{Cf}]")
+private val metadataWhitespace = Regex("\\s+")
+
+private fun metadataIdentity(value: String): String =
+    metadataWhitespace.replace(
+        invisibleMetadataCharacters.replace(
+            Normalizer.normalize(value, Normalizer.Form.NFKC),
+            "",
+        ),
+        " ",
+    ).trim().lowercase(Locale.ROOT)
+
+internal fun distinctMetadataText(excluded: String, vararg candidates: String?): String? {
+    val excludedIdentity = metadataIdentity(excluded)
+    return candidates.firstNotNullOfOrNull { candidate ->
+        val value = candidate?.trim()?.takeIf { it.isNotEmpty() } ?: return@firstNotNullOfOrNull null
+        value.takeIf { metadataIdentity(it) != excludedIdentity }
     }
+}
+
+internal fun resolveArtistMetadata(
+    title: String,
+    artist: String?,
+    author: String?,
+    albumArtist: String?,
+    displaySubtitle: String?,
+): String? = distinctMetadataText(title, artist, author, albumArtist, displaySubtitle)
 
 @Immutable
 data class NowPlaying(
