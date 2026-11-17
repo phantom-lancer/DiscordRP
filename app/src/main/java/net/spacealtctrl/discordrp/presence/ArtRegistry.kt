@@ -124,7 +124,7 @@ class ArtRegistry @Inject constructor(
         unavailableAt.clear()
         unavailableStreak.clear()
         stash.coverDeezerMisses = emptyMap()
-        if (!stash.coverSource.deezerBackup) stash.dropDeezerCovers()
+        if (!stash.coverSource.usesMusicBrainzFallback) stash.dropDeezerCovers()
     }
 
     private fun unavailableIsFresh(cacheKey: String, now: Long = System.currentTimeMillis()): Boolean {
