@@ -35,6 +35,8 @@ class ExternalArtworkHost @Inject constructor(
         return uploadJpeg(bytes)
     }
 
+    fun canUseUnmeteredNetwork(): Boolean = isUnmeteredNetwork()
+
     private fun isUnmeteredNetwork(): Boolean = runCatching {
         val manager = context.getSystemService(ConnectivityManager::class.java)
             ?: return@runCatching false
