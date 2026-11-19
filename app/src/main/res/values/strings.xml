@@ -63,7 +63,7 @@
     <string name="facet_timeline_blurb">Show playback progress and track duration.</string>
     <string name="facet_hide_paused_blurb">Hide the card while playback is paused.</string>
     <string name="facet_playback_glyph_blurb">Show a play or pause glyph over the artwork.</string>
-    <string name="facet_app_icon_blurb">Show the music player's app icon on the card.</string>
+    <string name="facet_app_icon_blurb">Show the music app icon on the card.</string>
     <string name="facet_artist">Artist name</string>
     <string name="facet_album">Album name</string>
     <string name="facet_timeline">Progress bar</string>
