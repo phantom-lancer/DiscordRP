@@ -31,7 +31,7 @@ class ActivityLinesTest {
 
     @Test
     fun `artist comparison ignores invisible characters`() {
-        assertEquals("Karry On", normalizeTrackTitle("Morning Glory - Karry On", "Morning\\u200B Glory"))
+        assertEquals("Karry On", normalizeTrackTitle("Morning Glory - Karry On", "Morning\u200B Glory"))
     }
 
     @Test
