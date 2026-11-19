@@ -7,6 +7,17 @@ import java.util.Locale
 
 private val invisibleMetadataCharacters = Regex("[\\p{Cf}]")
 private val metadataWhitespace = Regex("\\s+")
+private val metadataSeparators = Regex(
+    "\\s+(?:[-–—|•·])\\s+|\\s*[:：]\\s*|\\s+by\\s+",
+    RegexOption.IGNORE_CASE,
+)
+
+private fun cleanMetadataText(value: String?): String? {
+    val raw = value?.let { Normalizer.normalize(it, Normalizer.Form.NFKC) } ?: return null
+    return metadataWhitespace.replace(invisibleMetadataCharacters.replace(raw, ""), " ")
+        .trim()
+        .takeIf(String::isNotEmpty)
+}
 
 internal fun metadataIdentity(value: String): String =
     metadataWhitespace.replace(
@@ -17,28 +28,54 @@ internal fun metadataIdentity(value: String): String =
         " ",
     ).trim().lowercase(Locale.ROOT)
 
+/**
+ * MediaSession subtitle fields are sometimes formatted as "Track - Artist" instead
+ * of containing only the performer. Remove the exact track-title segment before
+ * treating the remaining segment as an artist. Never guess from partial substrings.
+ */
+internal fun normalizeArtistMetadataCandidate(title: String, candidate: String?): String? {
+    val value = cleanMetadataText(candidate) ?: return null
+    val titleKey = metadataIdentity(title)
+    if (titleKey.isEmpty()) return value
+
+    val parts = metadataSeparators.split(value)
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+    val titleIndex = parts.indexOfFirst { metadataIdentity(it) == titleKey }
+    if (titleIndex >= 0 && parts.size > 1) {
+        val adjacentArtist = when (titleIndex) {
+            0 -> parts.getOrNull(1)
+            parts.lastIndex -> parts.getOrNull(parts.lastIndex - 1)
+            else -> parts.getOrNull(titleIndex + 1)
+        }
+        return adjacentArtist?.takeIf { metadataIdentity(it) != titleKey }
+    }
+
+    return value.takeIf { metadataIdentity(it) != titleKey }
+}
+
 internal fun distinctMetadataText(excluded: String, vararg candidates: String?): String? {
     val excludedIdentity = metadataIdentity(excluded)
     return candidates.firstNotNullOfOrNull { candidate ->
-        val value = candidate?.trim()?.takeIf { it.isNotEmpty() } ?: return@firstNotNullOfOrNull null
+        val value = cleanMetadataText(candidate) ?: return@firstNotNullOfOrNull null
         value.takeIf { metadataIdentity(it) != excludedIdentity }
     }
 }
 
+internal fun preferredTrackTitle(displayTitle: String?, title: String?): String? =
+    cleanMetadataText(displayTitle) ?: cleanMetadataText(title)
+
 /**
  * Some players publish a formatted title ("Artist - Track") and the same artist
- * separately. Keep the metadata fields independent so either RPC title layout
- * can display the artist exactly once.
+ * separately. Strip a complete, known artist segment from either end of the title.
  */
 internal fun normalizeTrackTitle(title: String, vararg artists: String?): String {
-    val cleanTitle = title.trim()
-    if (cleanTitle.isEmpty()) return cleanTitle
-
-    val separators = Regex("\\s+[-–—|]\\s+")
-    val parts = separators.split(cleanTitle)
+    val cleanTitle = cleanMetadataText(title) ?: return ""
+    val parts = metadataSeparators.split(cleanTitle).map(String::trim).filter(String::isNotEmpty)
     if (parts.size < 2) return cleanTitle
 
     val identities = artists.filterNotNull()
+        .mapNotNull { normalizeArtistMetadataCandidate(cleanTitle, it) }
         .map(::metadataIdentity)
         .filter(String::isNotEmpty)
         .toSet()
@@ -51,21 +88,19 @@ internal fun normalizeTrackTitle(title: String, vararg artists: String?): String
     }.ifEmpty { cleanTitle }
 }
 
+/**
+ * DISPLAY_SUBTITLE is Android's preferred second line for media metadata. Prefer it
+ * over less presentation-specific ARTIST/AUTHOR values, which some players format
+ * with the track title. DISPLAY_DESCRIPTION is deliberately not an artist source.
+ */
 internal fun resolveArtistMetadata(
     title: String,
-    artist: String?,
-    author: String?,
-    albumArtist: String?,
     displaySubtitle: String?,
-    displayDescription: String? = null,
-): String? = distinctMetadataText(
-    title,
-    artist,
-    author,
-    albumArtist,
-    displaySubtitle,
-    displayDescription,
-)
+    artist: String?,
+    albumArtist: String?,
+    author: String?,
+): String? = listOf(displaySubtitle, artist, albumArtist, author)
+    .firstNotNullOfOrNull { normalizeArtistMetadataCandidate(title, it) }
 
 @Immutable
 data class NowPlaying(

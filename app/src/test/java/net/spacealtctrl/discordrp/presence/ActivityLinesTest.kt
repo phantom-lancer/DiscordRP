@@ -64,27 +64,121 @@ class ActivityLinesTest {
             "Album Artist",
             resolveArtistMetadata(
                 title = "Track Name",
-                artist = null,
-                author = null,
-                albumArtist = "Album Artist",
                 displaySubtitle = "Track Name",
+                artist = null,
+                albumArtist = "Album Artist",
+                author = null,
             ),
         )
     }
 
     @Test
-    fun `display description is used as the last artist metadata fallback`() {
+    fun `generic display description is not mistaken for an artist`() {
         assertEquals(
-            "Fallback Artist",
+            null,
             resolveArtistMetadata(
                 title = "Track Name",
-                artist = null,
-                author = null,
-                albumArtist = null,
                 displaySubtitle = "Track Name",
-                displayDescription = "Fallback Artist",
+                artist = null,
+                albumArtist = null,
+                author = null,
             ),
         )
+    }
+
+    @Test
+    fun `display title takes precedence over legacy title`() {
+        assertEquals("Clean Display Title", preferredTrackTitle("Clean Display Title", "Legacy Title"))
+        assertEquals("Legacy Title", preferredTrackTitle(null, "Legacy Title"))
+    }
+
+    @Test
+    fun `display subtitle takes precedence over a composite artist field`() {
+        assertEquals(
+            "Correct Artist",
+            resolveArtistMetadata(
+                title = "Track Name",
+                displaySubtitle = "Correct Artist",
+                artist = "Track Name - Wrong Artist",
+                albumArtist = "Album Artist",
+                author = null,
+            ),
+        )
+    }
+
+    @Test
+    fun `track title is removed from a composite subtitle before using it as artist`() {
+        assertEquals(
+            "Correct Artist",
+            resolveArtistMetadata(
+                title = "Track Name",
+                displaySubtitle = "Track Name - Correct Artist",
+                artist = null,
+                albumArtist = null,
+                author = null,
+            ),
+        )
+    }
+
+    @Test
+    fun `artist candidate containing track title is reduced to its artist segment`() {
+        assertEquals(
+            "Correct Artist",
+            normalizeArtistMetadataCandidate("Track Name", "Track Name • Correct Artist"),
+        )
+    }
+
+    @Test
+    fun `bullet separated artist prefix is removed from formatted title`() {
+        assertEquals("Track Name", normalizeTrackTitle("Correct Artist • Track Name", "Correct Artist"))
+    }
+
+    @Test
+    fun `both title layouts show artist and track exactly once with composite metadata`() {
+        val title = normalizeTrackTitle("Correct Artist - Track Name", "Correct Artist")
+        val artist = resolveArtistMetadata(
+            title = title,
+            displaySubtitle = "Correct Artist",
+            artist = "Correct Artist - Track Name",
+            albumArtist = null,
+            author = null,
+        )
+
+        val artistHeading = PresenceComposer.arrangeLines(
+            title = title,
+            artist = PresenceComposer.artistForLayout(
+                title = title,
+                artist = artist,
+                albumArtist = null,
+                showArtist = false,
+                artistAsTitle = true,
+            ),
+            album = null,
+            appLabel = "Yandex Music",
+            showAppName = false,
+            artistAsTitle = true,
+        )
+        assertEquals("Correct Artist", artistHeading.name)
+        assertEquals("Track Name", artistHeading.details)
+        assertEquals(null, artistHeading.state)
+
+        val trackHeading = PresenceComposer.arrangeLines(
+            title = title,
+            artist = PresenceComposer.artistForLayout(
+                title = title,
+                artist = artist,
+                albumArtist = null,
+                showArtist = true,
+                artistAsTitle = false,
+            ),
+            album = null,
+            appLabel = "Yandex Music",
+            showAppName = false,
+            artistAsTitle = false,
+        )
+        assertEquals("Track Name", trackHeading.name)
+        assertEquals("Correct Artist", trackHeading.details)
+        assertEquals(null, trackHeading.state)
     }
 
     @Test

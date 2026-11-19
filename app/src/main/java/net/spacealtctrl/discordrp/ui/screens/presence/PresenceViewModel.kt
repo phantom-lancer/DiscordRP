@@ -69,6 +69,7 @@ data class PresenceUiState(
     val customArtworkUploading: Boolean = false,
     val customArtworkError: String? = null,
     val bitmapArtworkUploadEnabled: Boolean = false,
+    val localArtworkFallbackEnabled: Boolean = true,
     val catboxUserHashConfigured: Boolean = false,
     val sampleAppLabel: String = "",
     val sampleAppPackage: String = "",
@@ -146,6 +147,7 @@ class PresenceViewModel @Inject constructor(
             customArtworkEnabled = stash.customArtworkEnabled,
             customArtworkUrl = stash.customArtworkUrl,
             bitmapArtworkUploadEnabled = stash.bitmapArtworkUploadEnabled,
+            localArtworkFallbackEnabled = stash.localArtworkFallbackEnabled,
             catboxUserHashConfigured = stash.hasCatboxUserHash,
         )
     }
@@ -221,6 +223,13 @@ class PresenceViewModel @Inject constructor(
             artRegistry.artworkHostingChanged()
             nudgeBridge()
         }
+    }
+
+    fun setLocalArtworkFallbackEnabled(enabled: Boolean) {
+        if (stash.localArtworkFallbackEnabled == enabled) return
+        stash.localArtworkFallbackEnabled = enabled
+        artRegistry.artworkHostingChanged()
+        nudgeBridge()
     }
 
     fun saveCatboxUserHash(value: String) {

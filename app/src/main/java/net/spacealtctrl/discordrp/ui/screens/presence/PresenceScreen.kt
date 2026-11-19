@@ -138,6 +138,17 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
                         checked = state.bitmapArtworkUploadEnabled,
                         onToggle = { viewModel.setBitmapArtworkUploadEnabled(!state.bitmapArtworkUploadEnabled) },
                     )
+                    RowRule()
+                    ToggleRow(
+                        title = stringResource(R.string.presence_local_art_fallback_toggle),
+                        subtitle = stringResource(R.string.presence_local_art_fallback_blurb),
+                        icon = Icons.Rounded.Image,
+                        checked = state.localArtworkFallbackEnabled,
+                        enabled = state.bitmapArtworkUploadEnabled,
+                        onToggle = {
+                            viewModel.setLocalArtworkFallbackEnabled(!state.localArtworkFallbackEnabled)
+                        },
+                    )
                 }
             }
 
@@ -294,16 +305,75 @@ fun PresenceScreen(viewModel: PresenceViewModel = hiltViewModel()) {
                 ) {
                     Column {
                         SectionHeader(stringResource(R.string.presence_facets_header))
+                        Text(
+                            text = stringResource(R.string.facet_track_title_default_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Look.palette.inkFaint,
+                            modifier = Modifier.padding(
+                                start = Look.gaps.tight,
+                                end = Look.gaps.tight,
+                                bottom = Look.gaps.snug,
+                            ),
+                        )
+
+                        SectionHeader(stringResource(R.string.presence_facet_title_header))
                         Cluster {
-                            ShareFacet.entries.forEachIndexed { index, facet ->
-                                ToggleRow(
-                                    title = stringResource(facet.labelRes()),
-                                    icon = facet.icon(),
-                                    checked = state.facets[facet] == true,
-                                    onToggle = { viewModel.flipFacet(facet) },
-                                )
-                                if (index != ShareFacet.entries.lastIndex) RowRule()
-                            }
+                            listOf(ShareFacet.ARTIST_AS_TITLE, ShareFacet.APP_NAME)
+                                .forEachIndexed { index, facet ->
+                                    ToggleRow(
+                                        title = stringResource(facet.labelRes()),
+                                        subtitle = stringResource(facet.blurbRes()),
+                                        icon = facet.icon(),
+                                        checked = state.facets[facet] == true,
+                                        onToggle = { viewModel.flipFacet(facet) },
+                                    )
+                                    if (index != 1) RowRule()
+                                }
+                        }
+
+                        SectionHeader(stringResource(R.string.presence_facet_track_header))
+                        Cluster {
+                            listOf(ShareFacet.ARTIST, ShareFacet.ALBUM)
+                                .forEachIndexed { index, facet ->
+                                    ToggleRow(
+                                        title = stringResource(facet.labelRes()),
+                                        subtitle = stringResource(facet.blurbRes()),
+                                        icon = facet.icon(),
+                                        checked = state.facets[facet] == true,
+                                        onToggle = { viewModel.flipFacet(facet) },
+                                    )
+                                    if (index != 1) RowRule()
+                                }
+                        }
+
+                        SectionHeader(stringResource(R.string.presence_facet_playback_header))
+                        Cluster {
+                            listOf(ShareFacet.TIMELINE, ShareFacet.HIDE_PAUSED)
+                                .forEachIndexed { index, facet ->
+                                    ToggleRow(
+                                        title = stringResource(facet.labelRes()),
+                                        subtitle = stringResource(facet.blurbRes()),
+                                        icon = facet.icon(),
+                                        checked = state.facets[facet] == true,
+                                        onToggle = { viewModel.flipFacet(facet) },
+                                    )
+                                    if (index != 1) RowRule()
+                                }
+                        }
+
+                        SectionHeader(stringResource(R.string.presence_facet_icons_header))
+                        Cluster {
+                            listOf(ShareFacet.PLAYBACK_GLYPH, ShareFacet.APP_ICON)
+                                .forEachIndexed { index, facet ->
+                                    ToggleRow(
+                                        title = stringResource(facet.labelRes()),
+                                        subtitle = stringResource(facet.blurbRes()),
+                                        icon = facet.icon(),
+                                        checked = state.facets[facet] == true,
+                                        onToggle = { viewModel.flipFacet(facet) },
+                                    )
+                                    if (index != 1) RowRule()
+                                }
                         }
                     }
                 }
@@ -449,6 +519,17 @@ private fun ShareFacet.labelRes(): Int = when (this) {
     ShareFacet.HIDE_PAUSED -> R.string.facet_hide_paused
     ShareFacet.APP_NAME -> R.string.facet_app_name
     ShareFacet.ARTIST_AS_TITLE -> R.string.facet_artist_as_title
+}
+
+private fun ShareFacet.blurbRes(): Int = when (this) {
+    ShareFacet.ARTIST -> R.string.facet_artist_blurb
+    ShareFacet.ALBUM -> R.string.facet_album_blurb
+    ShareFacet.TIMELINE -> R.string.facet_timeline_blurb
+    ShareFacet.PLAYBACK_GLYPH -> R.string.facet_playback_glyph_blurb
+    ShareFacet.APP_ICON -> R.string.facet_app_icon_blurb
+    ShareFacet.HIDE_PAUSED -> R.string.facet_hide_paused_blurb
+    ShareFacet.APP_NAME -> R.string.facet_app_name_blurb
+    ShareFacet.ARTIST_AS_TITLE -> R.string.facet_artist_as_title_blurb
 }
 
 private fun ShareFacet.icon(): ImageVector = when (this) {
