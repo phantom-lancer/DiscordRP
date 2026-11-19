@@ -36,19 +36,21 @@ class ExternalArtworkHost @Inject constructor(
         }
     }
 
-    suspend fun uploadBitmapOnUnmeteredNetwork(bitmap: Bitmap): String? {
-        if (!isUnmeteredNetwork()) return null
+    suspend fun uploadBitmap(bitmap: Bitmap): String? {
+        if (!hasActiveNetwork()) return null
         val bytes = withContext(Dispatchers.Default) { compress(bitmap) }
-        if (!isUnmeteredNetwork()) return null
+        if (!hasActiveNetwork()) return null
         return uploadJpeg(bytes)
     }
 
-    fun canUseUnmeteredNetwork(): Boolean = isUnmeteredNetwork()
-
-    private fun isUnmeteredNetwork(): Boolean = runCatching {
+    fun canUseUnmeteredNetwork(): Boolean = runCatching {
         val manager = context.getSystemService(ConnectivityManager::class.java)
             ?: return@runCatching false
         manager.activeNetwork != null && !manager.isActiveNetworkMetered
+    }.getOrDefault(false)
+
+    private fun hasActiveNetwork(): Boolean = runCatching {
+        context.getSystemService(ConnectivityManager::class.java)?.activeNetwork != null
     }.getOrDefault(false)
 
     private fun decodeUri(uri: Uri): Bitmap? {

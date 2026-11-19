@@ -132,7 +132,7 @@ class ArtRegistry @Inject constructor(
         uploadScope.launch {
             try {
                 val bitmap = cover.artwork ?: return@launch
-                val uploaded = externalArtworkHost.uploadBitmapOnUnmeteredNetwork(bitmap) ?: return@launch
+                val uploaded = externalArtworkHost.uploadBitmap(bitmap) ?: return@launch
                 if (isStale(generation)) return@launch
                 val registered = store(uploaded, cover.cacheKey, generation) ?: return@launch
 

@@ -25,6 +25,32 @@ internal fun distinctMetadataText(excluded: String, vararg candidates: String?):
     }
 }
 
+/**
+ * Some players publish a formatted title ("Artist - Track") and the same artist
+ * separately. Keep the metadata fields independent so either RPC title layout
+ * can display the artist exactly once.
+ */
+internal fun normalizeTrackTitle(title: String, vararg artists: String?): String {
+    val cleanTitle = title.trim()
+    if (cleanTitle.isEmpty()) return cleanTitle
+
+    val separators = Regex("\\s+[-–—|]\\s+")
+    val parts = separators.split(cleanTitle)
+    if (parts.size < 2) return cleanTitle
+
+    val identities = artists.filterNotNull()
+        .map(::metadataIdentity)
+        .filter(String::isNotEmpty)
+        .toSet()
+    if (identities.isEmpty()) return cleanTitle
+
+    return when {
+        metadataIdentity(parts.first()) in identities -> parts.drop(1).joinToString(" - ").trim()
+        metadataIdentity(parts.last()) in identities -> parts.dropLast(1).joinToString(" - ").trim()
+        else -> cleanTitle
+    }.ifEmpty { cleanTitle }
+}
+
 internal fun resolveArtistMetadata(
     title: String,
     artist: String?,

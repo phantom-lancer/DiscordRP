@@ -15,6 +15,26 @@ class ActivityLinesTest {
         )
 
     @Test
+    fun `artist prefix is removed from formatted track title`() {
+        assertEquals("Karry On", normalizeTrackTitle("Morning Glory - Karry On", "Morning Glory"))
+    }
+
+    @Test
+    fun `artist suffix is removed from formatted track title`() {
+        assertEquals("Karry On", normalizeTrackTitle("Karry On - Morning Glory", "Morning Glory"))
+    }
+
+    @Test
+    fun `track title is unchanged when artist is not a complete title segment`() {
+        assertEquals("Karry On (Morning Glory Remix)", normalizeTrackTitle("Karry On (Morning Glory Remix)", "Morning Glory"))
+    }
+
+    @Test
+    fun `artist comparison ignores invisible characters`() {
+        assertEquals("Karry On", normalizeTrackTitle("Morning Glory - Karry On", "Morning\\u200B Glory"))
+    }
+
+    @Test
     fun `artist metadata never repeats the track title`() {
         assertEquals(
             "Correct Artist",

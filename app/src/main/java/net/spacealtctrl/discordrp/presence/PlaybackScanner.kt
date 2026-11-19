@@ -54,12 +54,12 @@ class PlaybackScanner @Inject constructor(
         if (stash.hideWhenPaused && paused) return null
 
         val metadata = controller.metadata ?: return null
-        val title = metadata.firstText(
+        val rawTitle = metadata.firstText(
             MediaMetadata.METADATA_KEY_TITLE,
             MediaMetadata.METADATA_KEY_DISPLAY_TITLE,
         ) ?: return null
         val artist = resolveArtistMetadata(
-            title = title,
+            title = rawTitle,
             artist = metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
             author = metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
             albumArtist = metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
@@ -71,6 +71,7 @@ class PlaybackScanner @Inject constructor(
             metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
             metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
         )
+        val title = normalizeTrackTitle(rawTitle, artist, albumArtist)
         val artworkUri = metadata.firstText(
             MediaMetadata.METADATA_KEY_ALBUM_ART_URI,
             MediaMetadata.METADATA_KEY_ART_URI,
