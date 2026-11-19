@@ -5,8 +5,10 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.ConnectivityManager
 import android.net.Uri
+import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.ktor.client.HttpClient
+import io.ktor.client.request.header
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.statement.bodyAsText
@@ -16,6 +18,7 @@ import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import net.spacealtctrl.discordrp.BuildConfig
 import net.spacealtctrl.discordrp.R
 import net.spacealtctrl.discordrp.settings.Stash
 import javax.inject.Inject
@@ -118,12 +121,24 @@ class ExternalArtworkHost @Inject constructor(
                     },
                 )
             },
-        )
+        ) {
+            // Catbox blocks generic mobile-client User-Agents on some networks.
+            // CIO already uses HTTP/1.1; keep this identifying header scoped to Catbox uploads.
+            header(
+                HttpHeaders.UserAgent,
+                "DiscordRP/${BuildConfig.VERSION_NAME} (Android ${Build.VERSION.SDK_INT})",
+            )
+        }
         val body = response.bodyAsText().trim()
         if (response.status.value == 412) {
             val details = body.replace(Regex("\\s+"), " ").take(220)
                 .ifBlank { context.getString(R.string.catbox_empty_error_body) }
-            val trace = response.headers["cf-ray"].orEmpty()
+            val trace = sequenceOf(
+                response.headers["cf-ray"],
+                response.headers["x-request-id"],
+                response.headers["request-id"],
+            ).firstOrNull { !it.isNullOrBlank() }
+                ?: context.getString(R.string.catbox_trace_unavailable)
             error(context.getString(R.string.catbox_http_412_detail, details, trace))
         }
         check(response.status.value in 200..299) {

@@ -89,7 +89,6 @@ class ArtRegistry @Inject constructor(
         val bitmap = cover.artwork
         if (bitmap != null &&
             stash.bitmapArtworkUploadEnabled &&
-            stash.powerMode.fetchesRemoteArt &&
             !unavailableIsFresh(cover.cacheKey)
         ) {
             queueBitmapUpload(cover, generation)
@@ -132,15 +131,22 @@ class ArtRegistry @Inject constructor(
         uploadScope.launch {
             try {
                 val bitmap = cover.artwork ?: return@launch
-                val uploaded = externalArtworkHost.uploadBitmap(bitmap) ?: return@launch
+                val uploaded = externalArtworkHost.uploadBitmap(bitmap) ?: run {
+                    deferBitmapUploadRetry(cover.cacheKey, generation)
+                    return@launch
+                }
                 if (isStale(generation)) return@launch
-                val registered = store(uploaded, cover.cacheKey, generation) ?: return@launch
+                val registered = store(uploaded, cover.cacheKey, generation) ?: run {
+                    deferBitmapUploadRetry(cover.cacheKey, generation)
+                    return@launch
+                }
 
                 stash.coverAssets = stash.coverAssets + (cover.cacheKey to registered)
                 forgetMiss(cover.cacheKey)
                 unavailableStreak.remove(cover.cacheKey)
                 _artworkAvailable.tryEmit(Unit)
             } catch (error: Exception) {
+                deferBitmapUploadRetry(cover.cacheKey, generation)
                 log.warn(
                     TAG,
                     "Could not upload bitmap artwork: " +
@@ -150,6 +156,11 @@ class ArtRegistry @Inject constructor(
                 pendingBitmapUploads.remove(cover.cacheKey)
             }
         }
+    }
+
+    private fun deferBitmapUploadRetry(cacheKey: String, generation: Int) {
+        markUnavailable(cacheKey, generation)
+        if (!isStale(generation)) _artworkAvailable.tryEmit(Unit)
     }
 
     private fun markUnavailable(cacheKey: String, generation: Int): String? {

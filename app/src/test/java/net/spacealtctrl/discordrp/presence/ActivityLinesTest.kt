@@ -158,6 +158,36 @@ class ActivityLinesTest {
     }
 
     @Test
+    fun `artist title layout does not repeat the track title as album`() {
+        val lines = PresenceComposer.arrangeLines(
+            title = "SOS",
+            artist = "yukan archive",
+            album = "SOS",
+            appLabel = "Player",
+            showAppName = false,
+            artistAsTitle = true,
+        )
+        assertEquals("yukan archive", lines.name)
+        assertEquals("SOS", lines.details)
+        assertEquals(null, lines.state)
+    }
+
+    @Test
+    fun `normal layout does not repeat artist as album`() {
+        val lines = PresenceComposer.arrangeLines(
+            title = "SOS",
+            artist = "yukan archive",
+            album = "Yukan Archive",
+            appLabel = "Player",
+            showAppName = false,
+            artistAsTitle = false,
+        )
+        assertEquals("SOS", lines.name)
+        assertEquals("yukan archive", lines.details)
+        assertEquals(null, lines.state)
+    }
+
+    @Test
     fun `artist layout wins when both are set`() {
         val lines = arrange(showAppName = true, artistAsTitle = true)
         assertEquals("Morning Glory", lines.name)

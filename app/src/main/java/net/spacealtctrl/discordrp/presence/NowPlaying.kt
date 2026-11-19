@@ -8,7 +8,7 @@ import java.util.Locale
 private val invisibleMetadataCharacters = Regex("[\\p{Cf}]")
 private val metadataWhitespace = Regex("\\s+")
 
-private fun metadataIdentity(value: String): String =
+internal fun metadataIdentity(value: String): String =
     metadataWhitespace.replace(
         invisibleMetadataCharacters.replace(
             Normalizer.normalize(value, Normalizer.Form.NFKC),
