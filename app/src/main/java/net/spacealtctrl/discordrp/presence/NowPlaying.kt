@@ -57,7 +57,15 @@ internal fun resolveArtistMetadata(
     author: String?,
     albumArtist: String?,
     displaySubtitle: String?,
-): String? = distinctMetadataText(title, artist, author, albumArtist, displaySubtitle)
+    displayDescription: String? = null,
+): String? = distinctMetadataText(
+    title,
+    artist,
+    author,
+    albumArtist,
+    displaySubtitle,
+    displayDescription,
+)
 
 @Immutable
 data class NowPlaying(

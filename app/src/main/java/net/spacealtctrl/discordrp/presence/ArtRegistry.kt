@@ -56,7 +56,7 @@ class ArtRegistry @Inject constructor(
     private val coverGeneration = AtomicInteger()
     private val assetMutex = Mutex()
     private val uploadScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val pendingBitmapUploads = ConcurrentHashMap.newKeySet<String>()
+    private val pendingArtworkUploads = ConcurrentHashMap.newKeySet<String>()
     private val _artworkAvailable = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val artworkAvailable = _artworkAvailable.asSharedFlow()
 
@@ -82,16 +82,19 @@ class ArtRegistry @Inject constructor(
 
         val cached = stash.coverAssets[cover.cacheKey]
         if (cached?.startsWith("mp:") == true) return cached
-        if (ArtworkUrls.normalize(cached) != null) {
-            store(cached!!, cover.cacheKey, generation)?.let { return it }
+        val cachedArtworkUrl = ArtworkUrls.normalize(cached)
+        if (cachedArtworkUrl != null) {
+            store(cachedArtworkUrl, cover.cacheKey, generation)?.let { return it }
         }
 
         val bitmap = cover.artwork
-        if (bitmap != null &&
+        val artworkUrlToRehost = directArtwork ?: cachedArtworkUrl
+        val hasRehostableArtwork = bitmap != null || artworkUrlToRehost != null
+        if (hasRehostableArtwork &&
             stash.bitmapArtworkUploadEnabled &&
             !unavailableIsFresh(cover.cacheKey)
         ) {
-            queueBitmapUpload(cover, generation)
+            queueArtworkUpload(cover.copy(artworkUrl = artworkUrlToRehost), generation)
         }
 
         if (!stash.coverSource.usesMusicBrainzFallback ||
@@ -126,16 +129,37 @@ class ArtRegistry @Inject constructor(
         }
     }
 
-    private fun queueBitmapUpload(cover: ArtSource.Cover, generation: Int) {
-        if (!pendingBitmapUploads.add(cover.cacheKey)) return
+    private fun queueArtworkUpload(cover: ArtSource.Cover, generation: Int) {
+        if (!pendingArtworkUploads.add(cover.cacheKey)) return
         uploadScope.launch {
             try {
-                val bitmap = cover.artwork ?: return@launch
-                val uploaded = externalArtworkHost.uploadBitmap(bitmap) ?: run {
+                // Prefer the bitmap already delivered by MediaSession. If the player only
+                // provided a URL, or its bitmap upload failed, fetch and re-host that URL.
+                val bitmapUpload = cover.artwork?.let { bitmap ->
+                    try {
+                        externalArtworkHost.uploadBitmap(bitmap)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        log.warn(TAG, "Bitmap artwork upload failed: " + error.javaClass.simpleName)
+                        null
+                    }
+                }
+                val uploaded = bitmapUpload ?: cover.artworkUrl?.let { url ->
+                    try {
+                        externalArtworkHost.uploadArtworkUrl(url)
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        log.warn(TAG, "Artwork URL re-host failed: " + error.javaClass.simpleName)
+                        null
+                    }
+                }
+
+                if (uploaded.isNullOrBlank() || isStale(generation)) {
                     deferBitmapUploadRetry(cover.cacheKey, generation)
                     return@launch
                 }
-                if (isStale(generation)) return@launch
                 val registered = store(uploaded, cover.cacheKey, generation) ?: run {
                     deferBitmapUploadRetry(cover.cacheKey, generation)
                     return@launch
@@ -145,15 +169,17 @@ class ArtRegistry @Inject constructor(
                 forgetMiss(cover.cacheKey)
                 unavailableStreak.remove(cover.cacheKey)
                 _artworkAvailable.tryEmit(Unit)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
             } catch (error: Exception) {
                 deferBitmapUploadRetry(cover.cacheKey, generation)
                 log.warn(
                     TAG,
-                    "Could not upload bitmap artwork: " +
+                    "Could not publish player artwork: " +
                         (error.message ?: error.javaClass.simpleName).take(240),
                 )
             } finally {
-                pendingBitmapUploads.remove(cover.cacheKey)
+                pendingArtworkUploads.remove(cover.cacheKey)
             }
         }
     }

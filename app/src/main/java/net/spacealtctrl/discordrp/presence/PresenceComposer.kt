@@ -7,6 +7,8 @@ import net.spacealtctrl.discordrp.gateway.PresenceUpdate
 import net.spacealtctrl.discordrp.gateway.TimeSpan
 import net.spacealtctrl.discordrp.settings.Mood
 import net.spacealtctrl.discordrp.settings.Stash
+import java.text.Normalizer
+import java.util.Locale
 import javax.inject.Inject
 
 data class ComposedPresence(
@@ -194,18 +196,33 @@ class PresenceComposer @Inject constructor(
             }.withoutRepeatedLines()
         }
 
-        /** Keep the highest-priority occurrence and drop repeats from lower-priority RPC lines. */
+        /**
+         * Discord renders name, details and state as three separate visible lines.
+         * Compare their display forms after clipping and ignore punctuation/spacing,
+         * otherwise metadata such as "SOS" and "S.O.S." can still show twice.
+         */
+        private fun rpcMetadataIdentity(value: String): String =
+            Normalizer.normalize(value, Normalizer.Form.NFKC)
+                .filter { it.isLetterOrDigit() }
+                .lowercase(Locale.ROOT)
+
         private fun ActivityLines.withoutRepeatedLines(): ActivityLines {
+            // Apply Discord's 128-character limit before deduplication. Otherwise two
+            // long values can differ before clipping but become identical in the RPC.
+            val clippedName = ActivityCard.clip(name) ?: name.take(128)
+            val clippedDetails = ActivityCard.clip(details)
+            val clippedState = ActivityCard.clip(state)
             val seen = HashSet<String>()
+
             fun unique(value: String?): String? {
                 val text = value?.takeIf { it.isNotBlank() } ?: return null
-                return text.takeIf { seen.add(metadataIdentity(it)) }
+                return text.takeIf { seen.add(rpcMetadataIdentity(it)) }
             }
 
             return copy(
-                name = unique(name) ?: name,
-                details = unique(details),
-                state = unique(state),
+                name = unique(clippedName) ?: clippedName,
+                details = unique(clippedDetails),
+                state = unique(clippedState),
             )
         }
     }

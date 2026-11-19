@@ -64,6 +64,7 @@ class PlaybackScanner @Inject constructor(
             author = metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
             albumArtist = metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
             displaySubtitle = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
+            displayDescription = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION),
         )
         val albumArtist = distinctMetadataText(
             rawTitle,
