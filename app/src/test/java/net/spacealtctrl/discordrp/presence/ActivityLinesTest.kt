@@ -73,6 +73,21 @@ class ActivityLinesTest {
     }
 
     @Test
+    fun `display description is used as the last artist metadata fallback`() {
+        assertEquals(
+            "Fallback Artist",
+            resolveArtistMetadata(
+                title = "Track Name",
+                artist = null,
+                author = null,
+                albumArtist = null,
+                displaySubtitle = "Track Name",
+                displayDescription = "Fallback Artist",
+            ),
+        )
+    }
+
+    @Test
     fun `default layout headlines the track and hides the player`() {
         val lines = arrange()
         assertEquals("Karry On", lines.name)
@@ -183,6 +198,38 @@ class ActivityLinesTest {
             artistAsTitle = false,
         )
         assertEquals("SOS", lines.name)
+        assertEquals("yukan archive", lines.details)
+        assertEquals(null, lines.state)
+    }
+
+    @Test
+    fun `artist title mode removes punctuation variants of the same track from album line`() {
+        val lines = PresenceComposer.arrangeLines(
+            title = "SOS",
+            artist = "yukan archive",
+            album = "S.O.S.",
+            appLabel = "Player",
+            showAppName = false,
+            artistAsTitle = true,
+        )
+        assertEquals("yukan archive", lines.name)
+        assertEquals("SOS", lines.details)
+        assertEquals(null, lines.state)
+    }
+
+    @Test
+    fun `duplicate lines are removed after Discord 128 character clipping`() {
+        val title = "A".repeat(128) + " track suffix"
+        val album = "A".repeat(128) + " album suffix"
+        val lines = PresenceComposer.arrangeLines(
+            title = title,
+            artist = "yukan archive",
+            album = album,
+            appLabel = "Player",
+            showAppName = false,
+            artistAsTitle = false,
+        )
+        assertEquals("A".repeat(128), lines.name)
         assertEquals("yukan archive", lines.details)
         assertEquals(null, lines.state)
     }

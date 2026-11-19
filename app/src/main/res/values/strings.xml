@@ -127,7 +127,7 @@
     <string name="setup_sign_in_blurb">Your login stays on this device.</string>
     <string name="setup_battery_title">Unrestricted battery</string>
     <string name="setup_battery_blurb">Keeps the connection alive while the screen is off.</string>
-    <string name="setup_privacy_note">DiscordRP has no analytics and does not read notification text. Media-session access is used for playback only. If you enable bitmap hosting or choose a custom cover, the compressed image is uploaded to Catbox and becomes public. Your Discord login is stored on this device and used to connect to Discord.</string>
+    <string name="setup_privacy_note">DiscordRP has no analytics and does not read notification text. Media-session access is used for playback only. If you enable artwork hosting or choose a custom cover, the compressed image is uploaded to Catbox; if Catbox rejects it, RP Music tries Pomf. The resulting image link is public. Your Discord login is stored on this device and used to connect to Discord.</string>
     <string name="setup_finish_cta">Done</string>
 
     <string name="login_cta">Sign in with Discord</string>
@@ -177,9 +177,9 @@
     <string name="cover_add_sent">Sent to MusicBrainz. Discord shows it once the Cover Art Archive has it.</string>
     <string name="presence_covers_title">Album covers</string>
     <string name="cover_source_player">Player artwork only</string>
-    <string name="cover_source_player_blurb">Use the image supplied by the player. Bitmap-only artwork needs optional public hosting below; no automatic artwork upload uses mobile data.</string>
-    <string name="presence_bitmap_upload_toggle">Host bitmap-only covers</string>
-    <string name="presence_bitmap_upload_blurb">For players that expose a local image instead of a URL. RP Music compresses and uploads it once per track over an active connection; the link is public. Enabled by default for broad player support. Turn it off to keep local covers private.</string>
+    <string name="cover_source_player_blurb">Use the image supplied by the player. If Discord cannot fetch its direct URL, RP Music can download and re-host it. Local bitmap artwork also needs public hosting below.</string>
+    <string name="presence_bitmap_upload_toggle">Re-host covers Discord cannot fetch</string>
+    <string name="presence_bitmap_upload_blurb">For local artwork or player URLs Discord cannot fetch. RP Music compresses the image, uploads it to Catbox or the Pomf fallback, then registers the public link with Discord. Turn it off to keep artwork on the phone.</string>
     <string name="custom_cover_header">Cover for every track</string>
     <string name="custom_cover_enable">Use my own cover</string>
     <string name="custom_cover_selected">Your image replaces the artwork from every player.</string>
@@ -190,17 +190,17 @@
     <string name="custom_cover_ready">Saved. This image is used for every track.</string>
     <string name="custom_cover_hint">Choose one image to show instead of all album covers.</string>
     <string name="custom_cover_upload_notice_title">Upload a public image?</string>
-    <string name="custom_cover_upload_notice_body">Discord cannot use an image stored only on your phone. RP Music compresses it and uploads it to Catbox. Anyone with the public link can view it. Uploads associated with your Catbox account are kept with that account; anonymous uploads are removed after two years without views. Player artwork uploads use Wi-Fi only.</string>
+    <string name="custom_cover_upload_notice_body">Discord cannot use an image stored only on your phone. RP Music compresses it and uploads it to Catbox; if Catbox rejects the upload, it tries Pomf. Anyone with the resulting public link can view the image. Storage and removal policies depend on the hosting service. Player artwork may be uploaded whenever the app has an active network connection.</string>
     <string name="custom_cover_upload_confirm">Upload and use</string>
     <string name="catbox_userhash_header">Catbox upload access</string>
-    <string name="catbox_userhash_blurb">If Catbox rejects anonymous uploads with HTTP 412, create an account at catbox.moe and add its Userhash here. It is encrypted on this device with Android Keystore.</string>
+    <string name="catbox_userhash_blurb">Optional. Add your Catbox Userhash to store successful uploads in your account. If Catbox rejects an upload, RP Music automatically tries Pomf instead. The value is encrypted on this device with Android Keystore.</string>
     <string name="catbox_userhash_label">Catbox Userhash</string>
     <string name="catbox_userhash_placeholder">Paste your Userhash</string>
     <string name="catbox_userhash_save">Save</string>
     <string name="catbox_userhash_saved">Userhash is stored securely on this device.</string>
     <string name="catbox_userhash_clear">Remove Userhash</string>
-    <string name="catbox_http_412_anonymous">Catbox rejected the anonymous upload (HTTP 412). Add your Catbox Userhash in the Presence settings, then try again.</string>
-    <string name="catbox_http_412_auth">Catbox rejected this Userhash (HTTP 412). Check the value or try another network.</string>
+    <string name="catbox_http_412_anonymous">Catbox rejected the anonymous upload (HTTP 412). RP Music will try the Pomf fallback automatically. If both hosts fail, add a Catbox Userhash or try another network.</string>
+    <string name="catbox_http_412_auth">Catbox rejected this Userhash (HTTP 412). RP Music will try the Pomf fallback automatically. Check the Userhash only if the fallback also fails.</string>
     <string name="catbox_http_412_detail">Catbox refused the upload (HTTP 412). Server response: %1$s. Request trace: %2$s</string>
     <string name="catbox_trace_unavailable">not provided by server</string>
     <string name="catbox_empty_error_body">Catbox did not explain why it refused the request.</string>
