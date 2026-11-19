@@ -80,6 +80,8 @@ class ArtRegistry @Inject constructor(
             }
         }
 
+        // This cache now contains only the real player URL / MusicBrainz cover.
+        // v2 cover keys keep old releases' locally uploaded placeholders out of it.
         val cached = stash.coverAssets[cover.cacheKey]
         if (cached?.startsWith("mp:") == true) return cached
         val cachedArtworkUrl = ArtworkUrls.normalize(cached)
@@ -87,26 +89,26 @@ class ArtRegistry @Inject constructor(
             store(cachedArtworkUrl, cover.cacheKey, generation)?.let { return it }
         }
 
-        val bitmap = cover.artwork
-        val artworkUrlToRehost = directArtwork ?: cachedArtworkUrl
-        val hasRehostableArtwork = bitmap != null || artworkUrlToRehost != null
-        if (hasRehostableArtwork &&
+        val localFallback = resolveLocalArtworkFallback(cover.cacheKey, generation)
+        val canUseLocalBitmap = cover.artwork != null && stash.localArtworkFallbackEnabled
+        val canRehostDirectUrl = directArtwork != null
+        if ((canUseLocalBitmap || canRehostDirectUrl) &&
             stash.bitmapArtworkUploadEnabled &&
             !unavailableIsFresh(cover.cacheKey)
         ) {
-            queueArtworkUpload(cover.copy(artworkUrl = artworkUrlToRehost), generation)
+            queueArtworkUpload(cover, generation)
         }
 
         if (!stash.coverSource.usesMusicBrainzFallback ||
             !stash.powerMode.fetchesRemoteArt ||
             !externalArtworkHost.canUseUnmeteredNetwork()
-        ) return null
-        if (unavailableIsFresh(cover.cacheKey)) return null
+        ) return localFallback
+        if (unavailableIsFresh(cover.cacheKey)) return localFallback
 
         uploadedGroup(cover.cacheKey)?.let { groupId ->
             checkUpload(cover.cacheKey, groupId, generation)?.let { return it }
         }
-        if (missIsFresh(cover.cacheKey)) return null
+        if (missIsFresh(cover.cacheKey)) return localFallback
 
         val request = CoverRequest(
             artist = cover.artist,
@@ -119,14 +121,26 @@ class ArtRegistry @Inject constructor(
             is CoverResult.Found -> {
                 if (isStale(generation)) return null
                 store(result.url, cover.cacheKey, generation)?.also { forgetMiss(cover.cacheKey) }
-                    ?: markUnavailable(cover.cacheKey, generation)
+                    ?: resolveLocalArtworkFallback(cover.cacheKey, generation)
             }
             is CoverResult.Missing -> {
                 if (!isStale(generation)) rememberMiss(cover.cacheKey, result)
-                null
+                resolveLocalArtworkFallback(cover.cacheKey, generation)
             }
-            CoverResult.Unavailable -> markUnavailable(cover.cacheKey, generation)
+            CoverResult.Unavailable -> {
+                markUnavailable(cover.cacheKey, generation)
+                resolveLocalArtworkFallback(cover.cacheKey, generation)
+            }
         }
+    }
+
+    /** Local player artwork is a fallback, never the permanent replacement for a real cover. */
+    private suspend fun resolveLocalArtworkFallback(cacheKey: String, generation: Int): String? {
+        if (!stash.localArtworkFallbackEnabled) return null
+        val cached = stash.localArtworkAssets[cacheKey] ?: return null
+        if (cached.startsWith("mp:")) return cached
+        val url = ArtworkUrls.normalize(cached) ?: return null
+        return store(url, cacheKey, generation, localArtworkFallback = true)
     }
 
     private fun queueArtworkUpload(cover: ArtSource.Cover, generation: Int) {
@@ -134,16 +148,21 @@ class ArtRegistry @Inject constructor(
         uploadScope.launch {
             try {
                 // Prefer the bitmap already delivered by MediaSession. If the player only
-                // provided a URL, or its bitmap upload failed, fetch and re-host that URL.
-                val bitmapUpload = cover.artwork?.let { bitmap ->
-                    try {
-                        externalArtworkHost.uploadBitmap(bitmap)
-                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                        throw cancelled
-                    } catch (error: Exception) {
-                        log.warn(TAG, "Bitmap artwork upload failed: " + error.javaClass.simpleName)
-                        null
+                // provided a URL, fetch and re-host it. Keep the result in a separate
+                // fallback cache so a later real MusicBrainz cover can replace it.
+                val bitmapUpload = if (stash.localArtworkFallbackEnabled) {
+                    cover.artwork?.let { bitmap ->
+                        try {
+                            externalArtworkHost.uploadBitmap(bitmap)
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            log.warn(TAG, "Bitmap artwork upload failed: " + error.javaClass.simpleName)
+                            null
+                        }
                     }
+                } else {
+                    null
                 }
                 val uploaded = bitmapUpload ?: cover.artworkUrl?.let { url ->
                     try {
@@ -160,13 +179,21 @@ class ArtRegistry @Inject constructor(
                     deferBitmapUploadRetry(cover.cacheKey, generation)
                     return@launch
                 }
-                val registered = store(uploaded, cover.cacheKey, generation) ?: run {
+                val registered = store(
+                    uploaded,
+                    cover.cacheKey,
+                    generation,
+                    localArtworkFallback = bitmapUpload != null,
+                ) ?: run {
                     deferBitmapUploadRetry(cover.cacheKey, generation)
                     return@launch
                 }
 
-                stash.coverAssets = stash.coverAssets + (cover.cacheKey to registered)
-                forgetMiss(cover.cacheKey)
+                if (bitmapUpload != null) {
+                    stash.localArtworkAssets = stash.localArtworkAssets + (cover.cacheKey to registered)
+                } else {
+                    forgetMiss(cover.cacheKey)
+                }
                 unavailableStreak.remove(cover.cacheKey)
                 _artworkAvailable.tryEmit(Unit)
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -316,20 +343,32 @@ class ArtRegistry @Inject constructor(
     private suspend fun register(url: String, cacheKey: String, generation: Int): String? =
         store(url, cacheKey, generation)
 
-    private suspend fun store(url: String, cacheKey: String, generation: Int): String? {
+    private suspend fun store(
+        url: String,
+        cacheKey: String,
+        generation: Int,
+        localArtworkFallback: Boolean = false,
+    ): String? {
         val direct = ArtworkUrls.normalize(url) ?: return null
         if (isStale(generation)) return null
 
+        fun readCache(): Map<String, String> =
+            if (localArtworkFallback) stash.localArtworkAssets else stash.coverAssets
+
+        fun writeCache(values: Map<String, String>) {
+            if (localArtworkFallback) stash.localArtworkAssets = values else stash.coverAssets = values
+        }
+
         val urlKey = "asset:url:" + sha256(direct)
-        stash.coverAssets[urlKey]?.takeIf { it.startsWith("mp:") }?.let { cached ->
-            stash.coverAssets = stash.coverAssets + (cacheKey to cached)
+        readCache()[urlKey]?.takeIf { it.startsWith("mp:") }?.let { cached ->
+            writeCache(readCache() + (cacheKey to cached))
             return cached
         }
 
         return assetMutex.withLock {
             if (isStale(generation)) return@withLock null
-            stash.coverAssets[urlKey]?.takeIf { it.startsWith("mp:") }?.let { cached ->
-                stash.coverAssets = stash.coverAssets + (cacheKey to cached)
+            readCache()[urlKey]?.takeIf { it.startsWith("mp:") }?.let { cached ->
+                writeCache(readCache() + (cacheKey to cached))
                 return@withLock cached
             }
 
@@ -343,9 +382,9 @@ class ArtRegistry @Inject constructor(
             }
             if (isStale(generation)) return@withLock null
 
-            stash.coverAssets = stash.coverAssets +
+            writeCache(readCache() +
                 (urlKey to registered) +
-                (cacheKey to registered)
+                (cacheKey to registered))
             unavailableStreak.remove(cacheKey)
             registered
         }

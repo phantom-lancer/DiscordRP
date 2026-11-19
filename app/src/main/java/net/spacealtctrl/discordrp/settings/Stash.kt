@@ -231,6 +231,14 @@ class Stash private constructor(
         get() = prefs.getBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, true)
         set(value) = write { putBoolean(KEY_BITMAP_ART_UPLOAD_ENABLED, value) }
 
+    var localArtworkFallbackEnabled: Boolean
+        get() = prefs.getBoolean(KEY_LOCAL_ARTWORK_FALLBACK_ENABLED, true)
+        set(value) = write { putBoolean(KEY_LOCAL_ARTWORK_FALLBACK_ENABLED, value) }
+
+    var localArtworkAssets: Map<String, String>
+        get() = readMap(KEY_LOCAL_ARTWORK_ASSETS)
+        set(value) = write { putString(KEY_LOCAL_ARTWORK_ASSETS, json.encodeToString(value)) }
+
     var catboxUserHash: String
         get() = prefs.getString(KEY_CATBOX_USER_HASH, null)
             ?.let { TokenVault.decrypt(it, catboxAlias) }.orEmpty()
@@ -314,6 +322,7 @@ class Stash private constructor(
                 remove(KEY_COVER_MISSES)
                 remove(KEY_COVER_MISS_GROUPS)
                 remove(KEY_COVER_UPLOADS)
+                remove(KEY_LOCAL_ARTWORK_ASSETS)
                 remove(KEY_COVER_DEEZER_ALBUMS)
                 remove(KEY_COVER_ALBUM_MISSES)
                 remove(KEY_COVER_DEEZER_ASSETS)
@@ -399,6 +408,8 @@ class Stash private constructor(
         private const val KEY_CUSTOM_ART_ENABLED = "art.custom.enabled"
         private const val KEY_CUSTOM_ART_URL = "art.custom.url"
         private const val KEY_BITMAP_ART_UPLOAD_ENABLED = "art.bitmap_upload.enabled"
+        private const val KEY_LOCAL_ARTWORK_FALLBACK_ENABLED = "art.local_fallback.enabled"
+        private const val KEY_LOCAL_ARTWORK_ASSETS = "art.local_fallback.assets.v1"
         private const val KEY_CATBOX_USER_HASH = "art.catbox.userhash.enc"
         private const val KEY_COVER_DEEZER_ALBUMS = "art.cover_deezer_albums.v1"
         private val LEGACY_ART_KEYS = listOf(

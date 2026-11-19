@@ -128,8 +128,11 @@ class PresenceComposer @Inject constructor(
     private fun coverKey(track: NowPlaying): String {
         val artist = track.albumArtist ?: track.artist
         val album = track.album?.takeIf { it.isNotBlank() }
-        return if (album != null) artist.orEmpty() + "|" + album
+        val identity = if (album != null) artist.orEmpty() + "|" + album
         else artist.orEmpty() + "|song:" + track.title
+        // v2 separates newly discovered official artwork from legacy player-bitmap
+        // entries that older versions stored in the same per-track cache slot.
+        return "cover:v2|" + identity
     }
 
     companion object {
@@ -160,7 +163,11 @@ class PresenceComposer @Inject constructor(
             showArtist: Boolean,
             artistAsTitle: Boolean,
         ): String? = if (showArtist || artistAsTitle) {
-            distinctMetadataText(title, artist, albumArtist)
+            distinctMetadataText(
+                title,
+                normalizeArtistMetadataCandidate(title, artist),
+                normalizeArtistMetadataCandidate(title, albumArtist),
+            )
         } else {
             null
         }

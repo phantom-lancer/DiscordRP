@@ -54,24 +54,23 @@ class PlaybackScanner @Inject constructor(
         if (stash.hideWhenPaused && paused) return null
 
         val metadata = controller.metadata ?: return null
-        val rawTitle = metadata.firstText(
-            MediaMetadata.METADATA_KEY_TITLE,
-            MediaMetadata.METADATA_KEY_DISPLAY_TITLE,
+        val rawTitle = preferredTrackTitle(
+            displayTitle = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_TITLE),
+            title = metadata.text(MediaMetadata.METADATA_KEY_TITLE),
         ) ?: return null
+        val displaySubtitle = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)
+        val rawArtist = metadata.text(MediaMetadata.METADATA_KEY_ARTIST)
+        val rawAlbumArtist = metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
+        val rawAuthor = metadata.text(MediaMetadata.METADATA_KEY_AUTHOR)
         val artist = resolveArtistMetadata(
             title = rawTitle,
-            artist = metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
-            author = metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
-            albumArtist = metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
-            displaySubtitle = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE),
-            displayDescription = metadata.text(MediaMetadata.METADATA_KEY_DISPLAY_DESCRIPTION),
+            displaySubtitle = displaySubtitle,
+            artist = rawArtist,
+            albumArtist = rawAlbumArtist,
+            author = rawAuthor,
         )
-        val albumArtist = distinctMetadataText(
-            rawTitle,
-            metadata.text(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
-            metadata.text(MediaMetadata.METADATA_KEY_ARTIST),
-            metadata.text(MediaMetadata.METADATA_KEY_AUTHOR),
-        )
+        val albumArtist = listOf(rawAlbumArtist, rawArtist, rawAuthor)
+            .firstNotNullOfOrNull { normalizeArtistMetadataCandidate(rawTitle, it) }
         val title = normalizeTrackTitle(rawTitle, artist, albumArtist)
         val artworkUri = metadata.firstText(
             MediaMetadata.METADATA_KEY_ALBUM_ART_URI,
