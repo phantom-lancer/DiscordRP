@@ -166,8 +166,8 @@
     <string name="presence_covers_title">Обложки альбомов</string>
     <string name="cover_source_player">Только обложка плеера</string>
     <string name="cover_source_player_blurb">Использовать изображение, которое передаёт музыкальный плеер. Для плееров, отдающих только локальную картинку, ниже есть отдельная настройка публичной загрузки.</string>
-    <string name="presence_bitmap_upload_toggle">Публиковать локальные обложки по Wi-Fi</string>
-    <string name="presence_bitmap_upload_blurb">Для плееров, которые передают локальную картинку вместо ссылки. RP Music сжимает её и загружает один раз на трек по Wi-Fi. Ссылка публичная. После добавления Catbox Userhash эта функция включается автоматически. Выключи её, чтобы не публиковать локальные обложки.</string>
+    <string name="presence_bitmap_upload_toggle">Публиковать локальные обложки</string>
+    <string name="presence_bitmap_upload_blurb">Для плееров, которые передают локальную картинку вместо ссылки. RP Music сжимает её и загружает один раз на трек при активном подключении к сети. Ссылка публичная. Функция включена по умолчанию для поддержки разных плееров. Выключи её, чтобы не публиковать локальные обложки.</string>
     <string name="custom_cover_header">Своя обложка для всех треков</string>
     <string name="custom_cover_enable">Использовать свою обложку</string>
     <string name="custom_cover_selected">Твоя картинка будет заменять обложки всех плееров.</string>

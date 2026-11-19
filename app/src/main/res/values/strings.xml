@@ -178,8 +178,8 @@
     <string name="presence_covers_title">Album covers</string>
     <string name="cover_source_player">Player artwork only</string>
     <string name="cover_source_player_blurb">Use the image supplied by the player. Bitmap-only artwork needs optional public hosting below; no automatic artwork upload uses mobile data.</string>
-    <string name="presence_bitmap_upload_toggle">Host bitmap-only covers on Wi-Fi</string>
-    <string name="presence_bitmap_upload_blurb">For players that expose a local image instead of a URL. RP Music compresses and uploads it once per track over Wi-Fi; the link is public. Adding a Catbox Userhash enables this by default. Turn it off to keep local covers private.</string>
+    <string name="presence_bitmap_upload_toggle">Host bitmap-only covers</string>
+    <string name="presence_bitmap_upload_blurb">For players that expose a local image instead of a URL. RP Music compresses and uploads it once per track over an active connection; the link is public. Enabled by default for broad player support. Turn it off to keep local covers private.</string>
     <string name="custom_cover_header">Cover for every track</string>
     <string name="custom_cover_enable">Use my own cover</string>
     <string name="custom_cover_selected">Your image replaces the artwork from every player.</string>
