@@ -191,7 +191,22 @@ class PresenceComposer @Inject constructor(
                     state = album,
                     largeText = null,
                 )
+            }.withoutRepeatedLines()
+        }
+
+        /** Keep the highest-priority occurrence and drop repeats from lower-priority RPC lines. */
+        private fun ActivityLines.withoutRepeatedLines(): ActivityLines {
+            val seen = HashSet<String>()
+            fun unique(value: String?): String? {
+                val text = value?.takeIf { it.isNotBlank() } ?: return null
+                return text.takeIf { seen.add(metadataIdentity(it)) }
             }
+
+            return copy(
+                name = unique(name) ?: name,
+                details = unique(details),
+                state = unique(state),
+            )
         }
     }
 }

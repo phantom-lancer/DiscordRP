@@ -202,6 +202,7 @@
     <string name="catbox_http_412_anonymous">Catbox rejected the anonymous upload (HTTP 412). Add your Catbox Userhash in the Presence settings, then try again.</string>
     <string name="catbox_http_412_auth">Catbox rejected this Userhash (HTTP 412). Check the value or try another network.</string>
     <string name="catbox_http_412_detail">Catbox refused the upload (HTTP 412). Server response: %1$s. Request trace: %2$s</string>
+    <string name="catbox_trace_unavailable">not provided by server</string>
     <string name="catbox_empty_error_body">Catbox did not explain why it refused the request.</string>
     <string name="cover_source_musicbrainz">MusicBrainz</string>
     <string name="cover_source_musicbrainz_blurb">Player artwork first. If unavailable, use MusicBrainz and the Cover Art Archive.</string>

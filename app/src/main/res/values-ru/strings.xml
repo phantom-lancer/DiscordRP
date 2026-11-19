@@ -190,6 +190,7 @@
     <string name="catbox_http_412_anonymous">Catbox отклонил анонимную загрузку (HTTP 412). Добавь Userhash своего аккаунта Catbox в настройках активности и повтори загрузку.</string>
     <string name="catbox_http_412_auth">Catbox отклонил этот Userhash (HTTP 412). Проверь значение или попробуй другую сеть.</string>
     <string name="catbox_http_412_detail">Catbox отклонил загрузку (HTTP 412). Ответ сервера: %1$s. Идентификатор запроса: %2$s</string>
+    <string name="catbox_trace_unavailable">сервер не предоставил</string>
     <string name="catbox_empty_error_body">Catbox не объяснил причину отказа.</string>
     <string name="cover_source_musicbrainz">MusicBrainz</string>
     <string name="cover_source_musicbrainz_blurb">Сначала используется обложка плеера. Если её нет, приложение ищет изображение в MusicBrainz и Cover Art Archive.</string>
